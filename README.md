@@ -1,5 +1,46 @@
 # Documentation for our Backend 
 
+
+## Installation & Building
+<ol>
+<li>
+Install Amplify CLI
+
+```console
+curl -sL https://aws-amplify.github.io/amplify-cli/install | bash && $SHELL
+```
+</li>
+<li>
+Create an Amplify project in Amplify Studio and pull a local version
+
+```console
+amplify pull --appId {appId} --envName staging
+```
+
+</li>
+<li>
+Replace the local Amplify project source with the source from this repo
+</li>
+<li>
+Update the Amplify project configuration with the following environment variables ([Click here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli)):
+
+```console
+amplify function update
+```
+
+<ul>
+    <li>PINPOINT_APP_ID</li>
+    <li>GRAPH_QL_KEY</li>
+    <li>GRAPH_QL_API_URL</li>
+    <li>BW_ACCOUNT_ID</li>
+    <li>BW_USERNAME</li>
+    <li>BW_PASSWORD</li>
+</ul>
+    
+</li>
+<li>Update Pinpoint Application with FCM Server Key:
+</li>
+</ol>
 ## Resources Used
 
 The backend is hosted on AWS with the following resources:
