@@ -18,9 +18,10 @@ The backend is hosted on AWS with the following resources:
     <li>User is prompted to allow push notifications. Upon accepting, the device's OS will return a unique device token, which is needed by Pinpoint to push notify the device.</li>
     <li>User must create an account to use the service. Upon opening the app, the option is presented to sign up. Signing up requires a first name, last name, username, password, email. After providing this information, 
     Cognito creates a new user in the user pool. The endpoint is subsequently hit with the newly created user's first name, last name, device token, and device type. The endpoint provides to the user their client id. </li>
+    <li>Upon signing in, </li>
 </ol>
 
-## Reccomended Reading
+## Recommended Reading
 <ul>
     <li></li>
 </ul>
