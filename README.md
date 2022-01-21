@@ -22,7 +22,8 @@ amplify pull --appId {appId} --envName staging
 Replace the local Amplify project source with the source from this repo
 </li>
 <li>
-Update the Amplify project configuration with the following environment variables ([Click here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli)):
+
+Update the Amplify project configuration with the following environment variables ([click here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli/)):
 
 ```console
 amplify function update
@@ -38,9 +39,13 @@ amplify function update
 </ul>
     
 </li>
-<li>Update Pinpoint Application with FCM Server Key:
+<li>Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server):
+    <ul>
+        This requires creating an account and application with FCM
+    </ul>
 </li>
 </ol>
+
 ## Resources Used
 
 The backend is hosted on AWS with the following resources:
