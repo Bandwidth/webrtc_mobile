@@ -54,43 +54,43 @@ class MainActivity extends AppCompatActivity {
 ### Flow of sample app
 
 * LoginActivity
-This is the default launch activity for the app. It allows you to register/sign in using your userId.
-We have used DynamoDB for data persistence and Cognito for authentication. On successful sign in, we
-get the Firebase device token for the device and if necessary, update the database tables
-(DeviceInfo and Person) with this information.
+    This is the default launch activity for the app. It allows you to register/sign in using your userId.
+    We have used DynamoDB for data persistence and Cognito for authentication. On successful sign in, we
+    get the Firebase device token for the device and if necessary, update the database tables
+    (DeviceInfo and Person) with this information.
 
 * ListUsersActivity
-Once logged in, the user is forwarded to the list users activity, which shows all the registered users.
-Each user item is associated with a corresponding "deviceId" (this is primary key for the db table
-that stores the firebase device token).
-Touching a user initiates a BW webrtc call to them. It kicks off the MainActivity, passing in the
-callee's deviceId to it.
+    Once logged in, the user is forwarded to the list users activity, which shows all the registered users.
+    Each user item is associated with a corresponding "deviceId" (this is primary key for the db table
+    that stores the firebase device token).
+    Touching a user initiates a BW webrtc call to them. It kicks off the MainActivity, passing in the
+    callee's deviceId to it.
 
 * MainActivity
-This activity is invoked when a) you call someone and b) you are called.
+    This activity is invoked when a) you call someone and b) you are called.
 
-** When you call someone
-This activity is passed the Callee's deviceId as a parameter. The caller's deviceId is stored on
-login. The activity then calls the backend api (see comments above getParticipantToken() in
-MainActivity for detailed explanation) which responds with a Bandwidth webrtc participant token
-for the caller. The participant token is then used to publish the caller's mediastream to the
-bandwidth webrtc session created by the backend.
+    When you call someone
+        This activity is passed the Callee's deviceId as a parameter. The caller's deviceId is stored on
+        login. The activity then calls the backend api (see comments above getParticipantToken() in
+        MainActivity for detailed explanation) which responds with a Bandwidth webrtc participant token
+        for the caller. The participant token is then used to publish the caller's mediastream to the
+        bandwidth webrtc session created by the backend.
 
-** When you are called
-MainActivity is also called when a user responds to a push notification. To further elaborate, the
-backend which responds with a participant token to a caller's request to initiate a call, also fires
-a push notification via Amazon Pinpoint to the callee. The notification has the callee's bandwidth
-participant token in it. When the user accepts the call, it will fire off MainActivity and publish
-their mediastream, using the participant token from notification, to the webrtc session.
+    When you are called
+        MainActivity is also called when a user responds to a push notification. To further elaborate, the
+        backend which responds with a participant token to a caller's request to initiate a call, also fires
+        a push notification via Amazon Pinpoint to the callee. The notification has the callee's bandwidth
+        participant token in it. When the user accepts the call, it will fire off MainActivity and publish
+        their mediastream, using the participant token from notification, to the webrtc session.
 
 * DismissActivity
-Used to dismiss the incoming webrtc call notification.
+    Used to dismiss the incoming webrtc call notification.
 
-PushListenerService
-This service handles incoming Firebase push notifications. It basically builds the notification
-dialogue and then notifies the callee. Upon accepting the notification, it will fire off the
-MainActivity. This handles both the app being in foreground and background (accepting the notification
-will start off the app).
+* PushListenerService
+    This service handles incoming Firebase push notifications. It basically builds the notification
+    dialogue and then notifies the callee. Upon accepting the notification, it will fire off the
+    MainActivity. This handles both the app being in foreground and background (accepting the notification
+    will start off the app).
 
 The bandwidth webrtc SDK can be found under webrtc/ All the UI components can be found under res/
 
@@ -102,11 +102,11 @@ The bandwidth webrtc SDK can be found under webrtc/ All the UI components can be
 * Don't force logging in everytime
 * UI field for email during registrations with Cognito
 * UI option to confirm email registrations using OTP. For now, to confirm a registration via amplify CLI, do the following
-** aws cognito-idp admin-set-user-password
-     --user-pool-id <your-user-pool-id> \
-     --username <username> \
-     --password <password> \
-     --permanent
+    aws cognito-idp admin-set-user-password
+         --user-pool-id <your-user-pool-id> \
+        --username <username> \
+        --password <password> \
+        --permanent
 * Hangups (works on the UI but the participant isn't removed from BW WebRTC session)
 * Better ringtone on incoming calls
 * Better UI for incoming call notifications
