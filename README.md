@@ -41,7 +41,7 @@ amplify function update
 </li>
 <li>
 
-Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server). This requires creating an account and application with FCM. Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console.
+Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server). This requires creating an account and application with FCM. Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console. TODO: Similar steps will be performed to upload a `.p12` certificate to enable iOS notifications when an iOS version is available.
 
 </li>
 </ol>
@@ -54,7 +54,7 @@ The backend is hosted on AWS with the following resources:
 | --- | ----------- |
 | Amplify | Wrapper for entire project, acts like git to host all resources and code |
 | Pinpoint | Notification service for push notifications. This service itself invokes Firebase Cloud Management (FCM) for Android and APNS for iOS devices |
-| Lambda | Two Lambdas are used in this project. One invokes Pinpoint to send push notifications and the other acts as a REST endpoint to manage calls, register users, and invoke the Pinpoint Lambda |
+| Lambda | Two Lambdas are used in this project. One invokes Pinpoint to send push notifications and the other acts as a REST endpoint to manage calls, register users, and invoke the Pinpoint Lambda. Both are written in Node |
 | AppSync | Wrapped by Amplify; AppSync manages the app state and synchronizes said state with the frontends. Data is held in a DynamoDB table and transferred through generated GraphQL wrappers. |
 | Cognito | Cognito handles user registration. Upon first entering the app, users can create an account. Cognito requires a username, password, and email |
 | DynamoDB | Never actually directly accessed - wrapped by AppSync and Amplify. Two entry tables are hosted here, 1) Person table detailing each user and 2) DeviceInfo detailing sensitive device tokens and webRTC session/participation information. A full implementation would likely decouple the DeviceInfo table entirely from the Amplify project, as not doing so provides all of this information to the front end |
@@ -71,5 +71,11 @@ The backend is hosted on AWS with the following resources:
 
 ## Recommended Reading
 <ul>
-    <li></li>
+    <li>The Code in this project is based on several example projects:
+        <ul>
+            <li>https://docs.aws.amazon.com/pinpoint/latest/developerguide/send-messages-push.html</li>
+            <li>https://docs.amplify.aws/lib/graphqlapi/graphql-from-nodejs/q/platform/js/</li>
+            <li>https://github.com/Bandwidth-Samples/webrtc-hello-world-js</li>
+        </ul>
+    </li>
 </ul>
