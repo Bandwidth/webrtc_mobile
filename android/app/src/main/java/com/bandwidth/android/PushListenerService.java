@@ -16,6 +16,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Date;
@@ -23,12 +25,6 @@ import java.util.Locale;
 
 public class PushListenerService extends FirebaseMessagingService {
     public static final String TAG = PushListenerService.class.getSimpleName();
-
-    // Intent action used in local broadcast
-    public static final String ACTION_PUSH_NOTIFICATION = "push-notification";
-    // Intent keys
-    public static final String INTENT_SNS_NOTIFICATION_FROM = "from";
-    public static final String INTENT_SNS_NOTIFICATION_DATA = "data";
 
     public static final String CHANNEL_ID = "BWChannel";
     public static final String CHANNEL_NAME = "WebRTC Mobile Sample";
@@ -41,32 +37,57 @@ public class PushListenerService extends FirebaseMessagingService {
         super.onNewToken(token);
 
         Log.d(TAG, "Registering push notifications token: " + token);
-        MainActivity.getPinpointManager(getApplicationContext()).getNotificationClient().registerDeviceToken(token);
     }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        String notificationTitle = remoteMessage.getData().get("pinpoint.notification.title");
-        String notificationBody = remoteMessage.getData().get("pinpoint.notification.body");
         Log.d(TAG, "Message: " + remoteMessage.getData());
 
+        String notificationTitle = remoteMessage.getData().get("pinpoint.notification.title");
+        String notificationBody = remoteMessage.getData().get("pinpoint.notification.body");
+
+        // TODO we can do better than parsing out the Bandwidth participantToken
+        //      from the notification data. We can have the app point deepLink
+        //      to the MainActivity with the participant token passed in as
+        //      a query string parameter. See https://developer.android.com/guide/navigation/navigation-deep-link
+        //      for details
+        URL deepLink = null;
         try {
+            deepLink = new URL(remoteMessage.getData().get("pinpoint.deeplink"));
+        } catch (MalformedURLException e) {
+            System.out.println(TAG + ": found malformed URL in notification " + e.getMessage());
+        }
 
+        String pToken = getBWPTokenFromNotification(deepLink);
 
+        try {
+            // Notification ids need to be unique; use timestamp for ids
             int notificationId = getNotificationId();
-            Intent fullScreenIntent = new Intent(this, ListUsersActivity.class);
-            PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(this, ACCEPT_CALL,
-                    fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+            // Create the notification channel
+            NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            createNotificationChannel(manager, CHANNEL_ID, CHANNEL_NAME);
+
+            // Create an intent that is supposed to be launched
+            // when receiving a push notification
+            // TODO full screen intents not working consistently with Android 10+
+            Intent fullScreenIntent = new Intent(this, MainActivity.class);
+            Intent dismissIntent = new Intent(this, DismissActivity.class);
+
+            fullScreenIntent.putExtra("pToken", pToken);
+            fullScreenIntent.putExtra("notificationId", notificationId);
+            dismissIntent.putExtra("notificationId", notificationId);
+
+            // Define separate intents for accept and decline intents
+            // (there are buttons for these in the notification)
             PendingIntent acceptCallIntent = PendingIntent.getActivity(this, ACCEPT_CALL,
                     fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             PendingIntent declineCallIntent = PendingIntent.getActivity(this, DECLINE_CALL,
-                    fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT); // TODO
+                    dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            createNotificationChannel(manager, CHANNEL_ID, CHANNEL_NAME);
+            // Build the notification itself, setting priority, icon, title, text, etc
             NotificationCompat.Builder notificationBuilder =
                     new NotificationCompat.Builder(this, CHANNEL_ID)
                             .setSmallIcon(R.drawable.ic_launcher_background) // TODO change icon
@@ -74,41 +95,29 @@ public class PushListenerService extends FirebaseMessagingService {
                             .setContentTitle(notificationTitle)
                             // Notification Text
                             .setContentText(notificationBody)
-                            // Disable ability to swipe off the notification
-                            .setOngoing(true)
+                            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                             .setPriority(NotificationCompat.PRIORITY_HIGH)
                             .setCategory(NotificationCompat.CATEGORY_CALL)
+                            .setAutoCancel(true)
+                            .addAction(R.drawable.common_full_open_on_phone, "Accept", acceptCallIntent)
+                            .addAction(R.drawable.common_full_open_on_phone, "Decline", declineCallIntent)
 
                             // Use a full-screen intent only for the highest-priority alerts where you
                             // have an associated activity that you would like to launch after the user
                             // interacts with the notification. Also, if your app targets Android 10
                             // or higher, you need to request the USE_FULL_SCREEN_INTENT permission in
                             // order for the platform to invoke this notification.
-                            .setFullScreenIntent(fullScreenPendingIntent, true);
+                            .setFullScreenIntent(acceptCallIntent, true);
 
 
-            notificationBuilder.addAction(
-                    NotificationCompat.Action.Builder(
-                            IconCompat.createWithResource(
-                                    getApplicationContext(), R.drawable.icon_accept_call // TODO
-                            ),
-                            getString(R.string.accept_call), // TODO
-                            acceptCallIntent
-                    )
-            )
+            // Actually send the notification
             manager.notify( notificationId, notificationBuilder.build());
 
         } catch (Exception e) {
+            // TODO error handling
             e.printStackTrace();
             System.out.println("EXCEPTION HERE: " + e.getMessage());
         }
-    }
-
-    private void broadcast(final String from, final HashMap<String, String> dataMap) {
-        Intent intent = new Intent(ACTION_PUSH_NOTIFICATION);
-        intent.putExtra(INTENT_SNS_NOTIFICATION_FROM, from);
-        intent.putExtra(INTENT_SNS_NOTIFICATION_DATA, dataMap);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void createNotificationChannel(NotificationManager manager, String channelId, String channelName) {
@@ -128,8 +137,8 @@ public class PushListenerService extends FirebaseMessagingService {
         // channel, if the device supports this feature.
         bwChannel.setLightColor(Color.RED);
 
-        bwChannel.enableVibration(true);
-        bwChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+//        bwChannel.enableVibration(true);
+//        bwChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
 
         manager.createNotificationChannel(bwChannel);
     }
@@ -149,5 +158,29 @@ public class PushListenerService extends FirebaseMessagingService {
         Date now = new Date();
         int id = Integer.parseInt(new SimpleDateFormat("ddHHmmss",  Locale.US).format(now));
         return id;
+    }
+
+    private String getBWPTokenFromNotification(URL deepLink) {
+        String qs = null;
+        String pToken = null;
+        try {
+            qs = deepLink.getQuery();
+            System.out.println(TAG + ": QUERY : " + qs);
+
+            for(String param : qs.split("&")) {
+                String name = param.split("=")[0];
+                String value = param.split("=")[1];
+
+                if(name.equals("tok")) {
+                    pToken = value;
+                    break;
+                }
+            }
+        } catch (NullPointerException e) {
+            // TODO error handling
+            System.out.println(TAG + ": no deeplink found in the notification");
+        } finally {
+            return pToken;
+        }
     }
 }

@@ -3,10 +3,16 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Username</string>
     <string name="prompt_password">Password</string>
+    <string name="prompt_firstname">Firstname</string>
+    <string name="prompt_lastname">Lastname</string>
     <string name="action_sign_in">Sign in or register</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="welcome">"Welcome !"</string>
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="firstname">FirstName</string>
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="incoming_call_content">Incoming BW WebRTC Call</string>
 </resources>

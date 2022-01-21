@@ -22,7 +22,7 @@
       "function": {
         "webrtcPushNotifier": {
           "deploymentBucketName": "amplify-webrtcsamplemobileap-staging-180209-deployment",
-          "s3Key": "amplify-builds/webrtcPushNotifier-74766570395255767264-build.zip"
+          "s3Key": "amplify-builds/webrtcPushNotifier-52334f42514161516143-build.zip"
         }
       },
       "auth": {

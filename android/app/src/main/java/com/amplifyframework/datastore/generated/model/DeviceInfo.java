@@ -28,11 +28,13 @@ public final class DeviceInfo implements Model {
   public static final QueryField ID = field("DeviceInfo", "id");
   public static final QueryField NOTIFY_TYPE = field("DeviceInfo", "notifyType");
   public static final QueryField DEVICE_TOKEN = field("DeviceInfo", "deviceToken");
+  public static final QueryField SESSION_ID = field("DeviceInfo", "sessionId");
   public static final QueryField PARTICIPANT_ID = field("DeviceInfo", "participantId");
   public static final QueryField PARTICIPANT_TOKEN = field("DeviceInfo", "participantToken");
   private final @ModelField(targetType="ID", isRequired = true) String id;
   private final @ModelField(targetType="String", isRequired = true) String notifyType;
   private final @ModelField(targetType="String", isRequired = true) String deviceToken;
+  private final @ModelField(targetType="String") String sessionId;
   private final @ModelField(targetType="String") String participantId;
   private final @ModelField(targetType="String") String participantToken;
   private @ModelField(targetType="AWSDateTime", isReadOnly = true) Temporal.DateTime createdAt;
@@ -47,6 +49,10 @@ public final class DeviceInfo implements Model {
   
   public String getDeviceToken() {
       return deviceToken;
+  }
+  
+  public String getSessionId() {
+      return sessionId;
   }
   
   public String getParticipantId() {
@@ -65,10 +71,11 @@ public final class DeviceInfo implements Model {
       return updatedAt;
   }
   
-  private DeviceInfo(String id, String notifyType, String deviceToken, String participantId, String participantToken) {
+  private DeviceInfo(String id, String notifyType, String deviceToken, String sessionId, String participantId, String participantToken) {
     this.id = id;
     this.notifyType = notifyType;
     this.deviceToken = deviceToken;
+    this.sessionId = sessionId;
     this.participantId = participantId;
     this.participantToken = participantToken;
   }
@@ -84,6 +91,7 @@ public final class DeviceInfo implements Model {
       return ObjectsCompat.equals(getId(), deviceInfo.getId()) &&
               ObjectsCompat.equals(getNotifyType(), deviceInfo.getNotifyType()) &&
               ObjectsCompat.equals(getDeviceToken(), deviceInfo.getDeviceToken()) &&
+              ObjectsCompat.equals(getSessionId(), deviceInfo.getSessionId()) &&
               ObjectsCompat.equals(getParticipantId(), deviceInfo.getParticipantId()) &&
               ObjectsCompat.equals(getParticipantToken(), deviceInfo.getParticipantToken()) &&
               ObjectsCompat.equals(getCreatedAt(), deviceInfo.getCreatedAt()) &&
@@ -97,6 +105,7 @@ public final class DeviceInfo implements Model {
       .append(getId())
       .append(getNotifyType())
       .append(getDeviceToken())
+      .append(getSessionId())
       .append(getParticipantId())
       .append(getParticipantToken())
       .append(getCreatedAt())
@@ -112,6 +121,7 @@ public final class DeviceInfo implements Model {
       .append("id=" + String.valueOf(getId()) + ", ")
       .append("notifyType=" + String.valueOf(getNotifyType()) + ", ")
       .append("deviceToken=" + String.valueOf(getDeviceToken()) + ", ")
+      .append("sessionId=" + String.valueOf(getSessionId()) + ", ")
       .append("participantId=" + String.valueOf(getParticipantId()) + ", ")
       .append("participantToken=" + String.valueOf(getParticipantToken()) + ", ")
       .append("createdAt=" + String.valueOf(getCreatedAt()) + ", ")
@@ -138,6 +148,7 @@ public final class DeviceInfo implements Model {
       null,
       null,
       null,
+      null,
       null
     );
   }
@@ -146,6 +157,7 @@ public final class DeviceInfo implements Model {
     return new CopyOfBuilder(id,
       notifyType,
       deviceToken,
+      sessionId,
       participantId,
       participantToken);
   }
@@ -162,6 +174,7 @@ public final class DeviceInfo implements Model {
   public interface BuildStep {
     DeviceInfo build();
     BuildStep id(String id);
+    BuildStep sessionId(String sessionId);
     BuildStep participantId(String participantId);
     BuildStep participantToken(String participantToken);
   }
@@ -171,6 +184,7 @@ public final class DeviceInfo implements Model {
     private String id;
     private String notifyType;
     private String deviceToken;
+    private String sessionId;
     private String participantId;
     private String participantToken;
     @Override
@@ -181,6 +195,7 @@ public final class DeviceInfo implements Model {
           id,
           notifyType,
           deviceToken,
+          sessionId,
           participantId,
           participantToken);
     }
@@ -196,6 +211,12 @@ public final class DeviceInfo implements Model {
      public BuildStep deviceToken(String deviceToken) {
         Objects.requireNonNull(deviceToken);
         this.deviceToken = deviceToken;
+        return this;
+    }
+    
+    @Override
+     public BuildStep sessionId(String sessionId) {
+        this.sessionId = sessionId;
         return this;
     }
     
@@ -223,10 +244,11 @@ public final class DeviceInfo implements Model {
   
 
   public final class CopyOfBuilder extends Builder {
-    private CopyOfBuilder(String id, String notifyType, String deviceToken, String participantId, String participantToken) {
+    private CopyOfBuilder(String id, String notifyType, String deviceToken, String sessionId, String participantId, String participantToken) {
       super.id(id);
       super.notifyType(notifyType)
         .deviceToken(deviceToken)
+        .sessionId(sessionId)
         .participantId(participantId)
         .participantToken(participantToken);
     }
@@ -239,6 +261,11 @@ public final class DeviceInfo implements Model {
     @Override
      public CopyOfBuilder deviceToken(String deviceToken) {
       return (CopyOfBuilder) super.deviceToken(deviceToken);
+    }
+    
+    @Override
+     public CopyOfBuilder sessionId(String sessionId) {
+      return (CopyOfBuilder) super.sessionId(sessionId);
     }
     
     @Override

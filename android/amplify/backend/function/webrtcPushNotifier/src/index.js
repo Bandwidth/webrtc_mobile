@@ -54,13 +54,31 @@ export const handler = async (event, context) => {
 
     if (body.action === "register") {
       // --- REGISTER ---
-      const created = await createDeviceInfo(body.notifyType, body.deviceId, body.deviceToken);
+      const created = await createDeviceInfo(body.notifyType, body.deviceToken);
       return wrapResult(created);
 
     } else if (body.action === "initiateCall") {
       // --- INITIATE ---
       const calling = await initiateCall(body.callerId, body.calleeId);
       return wrapResult(calling);
+
+    } else if (body.action === "oneWayCall") {
+      // --- ONE-WAY CALL ---
+      const calling = await oneWayCall(body.sessionId,body.calleeNotifyType,body.calleeDeviceToken);
+      return wrapResult(calling);
+
+    } else if (body.action === "deleteClientIds") {
+      // --- DELETE ---
+      let result = [];
+      while (body.clientIds.length) {
+        const id = body.clientIds.pop();
+        const clientInfo = await getDeviceInfo(id);
+        await deleteSession(clientInfo.sessionId);
+        await deleteParticipant(clientInfo.participantId);
+        const ret = await deleteDeviceInfo(clientInfo.id,clientInfo._version);
+        result.push(ret);
+      } 
+      return wrapResult({ deletedIds: result });
 
     } else {
       // --- UNKNOWN ---
@@ -82,11 +100,12 @@ const getDeviceInfoQ = gql`
   query getDeviceInfo($id: ID!) {
     getDeviceInfo(id: $id) {
       id
-      deviceId
+      _version
       deviceToken
       notifyType
       participantId
       participantToken
+      sessionId
     }
   }
 `
@@ -134,7 +153,6 @@ const listDeviceInfosQ = gql`
       items {
         id
         notifyType
-        deviceId
         deviceToken
         participantId
         participantToken
@@ -180,7 +198,6 @@ mutation createDeviceInfo($input: CreateDeviceInfoInput!) {
   createDeviceInfo(input: $input) {
     id
     notifyType
-    deviceId
     deviceToken
     participantId
     participantToken
@@ -188,7 +205,7 @@ mutation createDeviceInfo($input: CreateDeviceInfoInput!) {
 }
 `
 
-const createDeviceInfo = async (notifyType,deviceId,deviceToken) => {
+const createDeviceInfo = async (notifyType,deviceToken) => {
   try {
     console.log(" :: START CreateDeviceInfo :: ");
 
@@ -201,7 +218,7 @@ const createDeviceInfo = async (notifyType,deviceId,deviceToken) => {
       data: {
         query: print(createDeviceInfoQ),
         variables: {
-          input: { notifyType, deviceId, deviceToken }
+          input: { notifyType, deviceToken }
         }
       }
     };
@@ -212,10 +229,10 @@ const createDeviceInfo = async (notifyType,deviceId,deviceToken) => {
     console.log(" :: GRAPHQL CreateDeviceInfo :: ")
     console.log(graphqlData);
 
-    if (graphqlData.data && (graphqlData.data.data === null || graphqlData.data.errors !== null) ) {
-      console.log(" :: RESULT CreateDeviceInfo :: ")
+    if (graphqlData.data && graphqlData.data.data === null) {
+      console.log(" :: ERROR CreateDeviceInfo :: ")
       console.log(JSON.stringify(graphqlData.data.errors));
-      throw new Error("ERROR :: "+JSON.stringify(graphqlData.data.errors));
+      throw new Error("ERROR :: " + JSON.stringify(graphqlData.data.errors));
     }
 
     const body = graphqlData.data.data.createDeviceInfo;
@@ -235,15 +252,15 @@ mutation updateDeviceInfo($input: UpdateDeviceInfoInput!) {
   updateDeviceInfo(input: $input) {
     id
     notifyType
-    deviceId
     deviceToken
     participantId
     participantToken
+    sessionId
   }
 }
 `
 
-const updateDeviceInfo = async (clientId,participantId,participantToken) => {
+const updateDeviceInfo = async (clientId,sessionId,participantId,participantToken) => {
   try {
     console.log(" :: START updateDeviceInfo :: ");
 
@@ -258,6 +275,7 @@ const updateDeviceInfo = async (clientId,participantId,participantToken) => {
         variables: {
           input: {
             id: clientId,
+            sessionId: sessionId,
             participantId: participantId,
             participantToken: participantToken,
             _version: 0,
@@ -276,6 +294,57 @@ const updateDeviceInfo = async (clientId,participantId,participantToken) => {
     console.log(" :: RESULT updateDeviceInfo :: ")
     console.log(JSON.stringify(body));
     console.log(" :: END updateDeviceInfo :: ");
+    return body;
+  } catch (err) {
+    console.log("ERROR :: ", err);
+    return err;
+  }
+};
+
+
+const deleteDeviceInfoQ = gql`
+mutation deleteDeviceInfo($input: DeleteDeviceInfoInput!) {
+  deleteDeviceInfo(input: $input) {
+    id
+  }
+}
+`
+
+const deleteDeviceInfo = async (id,version) => {
+  try {
+    console.log(" :: START DeleteDeviceInfo :: ");
+
+    const params = {
+      url: process.env.GRAPH_QL_API_URL,
+      method: 'post',
+      headers: {
+          'x-api-key': process.env.GRAPH_QL_KEY
+      },
+      data: {
+        query: print(deleteDeviceInfoQ),
+        variables: {
+          input: { id, "_version":version }
+        }
+      }
+    };
+    console.log(" :: PARAMS DeleteDeviceInfo :: ")
+    console.log(JSON.stringify(params));
+
+    const graphqlData = await axios(params);
+    console.log(" :: GRAPHQL DeleteDeviceInfo :: ")
+    console.log(graphqlData);
+    if (graphqlData.data && graphqlData.data.errors) console.log(graphqlData.data.errors);
+
+    if (graphqlData.data && graphqlData.data.errors) {
+      console.log(" :: ERROR DeleteDeviceInfo :: ")
+      console.log(JSON.stringify(graphqlData.data.errors));
+      throw new Error("ERROR :: " + JSON.stringify(graphqlData.data.errors));
+    }
+
+    const body = graphqlData.data.data.deleteDeviceInfo;
+    console.log(" :: RESULT DeleteDeviceInfo :: ")
+    console.log(JSON.stringify(body));
+    console.log(" :: END DeleteDeviceInfo :: ");
     return body;
   } catch (err) {
     console.log("ERROR :: ", err);
@@ -336,6 +405,8 @@ function CreateMessageRequest(params) {
 
 async function SendMessage(notifyType,deviceToken,firstName,lastName,participantToken) {
   try {
+    console.log(" :: BEGIN SendMessage :: ");
+
     const msgParams = {
       title: 'Incoming Call',
       message: `${firstName} ${lastName} is calling you`,
@@ -350,10 +421,10 @@ async function SendMessage(notifyType,deviceToken,firstName,lastName,participant
       service: notifyType,
       
       // this will open the app to a specific page or interface - the incoming call
-      action: participantToken,
+      action: "DEEP_LINK",
       
       // Tells the application which call to join
-      url: participantToken,
+      url: "https://my.app.com/incomingCall?tok="+participantToken,
       
       // Priority of the push notification
       // Higher priorities can wake a sleeping device, lower priorities may 
@@ -367,7 +438,7 @@ async function SendMessage(notifyType,deviceToken,firstName,lastName,participant
       // Whether or not the notification is sent as a silent notification (which doesn't display)
       // A silent notification can be useful for number badges for example on an app
       silent: false,
-    }
+    };
 
     const messageRequest = CreateMessageRequest(msgParams);
     
@@ -386,17 +457,27 @@ async function SendMessage(notifyType,deviceToken,firstName,lastName,participant
     };
     
     // Attempt to send the message
-    const result = await pinpoint.sendMessages(params);
+    const result = await pinpoint.sendMessages(params).promise();
     console.log("RESULT :: ", result);
 
-    if (data.MessageResponse.Result[deviceToken].DeliveryStatus === 'SUCCESSFUL') {
+    if (result.MessageResponse && result.MessageResponse.Result[deviceToken].DeliveryStatus === 'SUCCESSFUL') {
+      console.log(" :: END SendMessage :: SUCCESS ");
       return { message: "success" };
     } else {
-      return { message: "failure" };
+
+      console.log("RESULT-DETAIL :: ", result.MessageResponse.Result);
+      console.log("RESULT-DETAIL-2 :: ", result.MessageResponse.Result[deviceToken]);
+
+      const ret = { 
+        message: "failure",
+        result: result
+      };
+      console.log(" :: END SendMessage :: return = ", ret);
+      return ret;
     }
 
   } catch(err) {
-    console.log("Failed:", err);
+    console.log(" :: END SendMessage :: FAILED :: err = ", err);
     return { message: "ERROR :: Failed to notify callee", error: err };
   }
 }
@@ -479,20 +560,50 @@ const webRTCController = new WebRTCController(webrtcClient);
     // Save the updated DeviceInfo records
     callerInfo.participantId = callerPId.id;
     callerInfo.participantToken = callerToken;
+    callerInfo.sessionId = sessionId;
 
     calleeInfo.participantId = calleePId.id;
     calleeInfo.participantToken = calleeToken;
+    calleeInfo.sessionId = sessionId;
 
-    await updateDeviceInfo(callerInfo.id, callerInfo.participantId, callerInfo.participantToken);
-    await updateDeviceInfo(calleeInfo.id, calleeInfo.participantId, calleeInfo.participantToken);
+    await updateDeviceInfo(callerInfo.id, callerInfo.sessionId, callerInfo.participantId, callerInfo.participantToken);
+    await updateDeviceInfo(calleeInfo.id, calleeInfo.sessionId, calleeInfo.participantId, calleeInfo.participantToken);
 
     // Notify Callee to join the session
     await SendMessage(calleeInfo.notifyType,calleeInfo.deviceToken,"Someone","Special",calleeInfo.participantToken);
 
-
     // Now that we have added them to the session, we can send back the token they need to join
     console.log(" :: END initiateCall :: ");
     return { token: callerInfo.participantToken };
+  } catch (error) {
+    console.log("Failed:", error);
+    return { message: "ERROR :: Failed to set up participant", error: error };
+  }
+};
+
+
+/**
+ * Initiate a call to another client
+ *   - Requires "CLIENT_ID" of the callee
+ *   - Returns the "PARTICIPANT_ID" for the caller to join the WebRTC session
+ * 
+ */
+ const oneWayCall =  async (sessionId,calleeNotifyType,calleeDeviceToken) => {
+  console.log(" :: BEGIN oneWayCall :: ");
+  try {
+    let [calleePId, calleeToken] = await createParticipant(uuidv1());
+
+    console.log(" :: CALLEE PARTICIPANT initiateCall :: ");
+    console.log("ID = ", calleePId.id, "TOK = ", calleeToken)
+
+    await addParticipantToSession(calleePId.id, sessionId);
+
+    // Notify Callee to join the session
+    await SendMessage(calleeNotifyType,calleeDeviceToken,"Someone","Special",calleeToken);
+
+    // Now that we have added them to the session, we can send back the token they need to join
+    console.log(" :: END oneWayCall :: ");
+    return { calleeToken: calleeToken };
   } catch (error) {
     console.log("Failed:", error);
     return { message: "ERROR :: Failed to set up participant", error: error };
@@ -578,5 +689,38 @@ async function addParticipantToSession(participantId, sessionId) {
     throw new Error(
       "Failed to addParticipantToSession, error from BAND:" + error.errorMessage
     );
+  }
+}
+
+async function deleteSession(sessionId) {
+  try {
+    await webRTCController.deleteSession(accountId,sessionId);
+  } catch (error) {
+    console.log("Error on deleteSession:", error);
+    // throw new Error(
+    //   "Failed to deleteSession, error from BAND:" + error.errorMessage
+    // );
+  }
+}
+
+async function removeParticipantFromSession(sessionId,participantId) {
+  try {
+    await webRTCController.removeParticipantFromSession(accountId,sessionId,participantId);
+  } catch (error) {
+    console.log("Error on removeParticipantFromSession:", error);
+    // throw new Error(
+    //   "Failed to removeParticipantFromSession, error from BAND:" + error.errorMessage
+    // );
+  }
+}
+
+async function deleteParticipant(participantId) {
+  try {
+    await webRTCController.deleteParticipant(accountId,participantId);
+  } catch (error) {
+    console.log("Error on deleteParticipant:", error);
+    // throw new Error(
+    //   "Failed to deleteParticipant, error from BAND:" + error.errorMessage
+    // );
   }
 }
