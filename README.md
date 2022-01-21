@@ -80,25 +80,31 @@ Rough API call flow between front end and back end
 - Request user's first & last name
 - Load Device Token for push notifications from native OS
 - Call API with:
+  ```
   {
-  "action":"register",
-  "notifyType": "GCM",
-  "deviceToken": "....",
+      "action":"register",
+      "notifyType": "GCM",
+      "deviceToken": "....",
   }
+  ```
 
 - Receive clientId in return:
+  ```
   {
-  "id": "d44bece7-4eee-4587-8682-a50a974bacde",
-  ....
+      "id": "d44bece7-4eee-4587-8682-a50a974bacde",
+      ....
   }
+  ```
 
 - Insert or Update Person record in GraphQL database
+  ```
   type Person @model @auth(rules: [{ allow: public }]) {
-  id: ID!
-  firstName: String!
-  lastName: String!
-  clientId: String!
+      id: ID!
+      firstName: String!
+      lastName: String!
+      clientId: String!
   }
+  ```
 
 - Query for list of People from GraphQL
 - Display list for user to choose from
@@ -106,34 +112,45 @@ Rough API call flow between front end and back end
 ### User chooses a Person to call:
 
 - When the user clicks on one of the People, use self-clientId and target-clientId to invoke "initiateCall":
+  ```
   {
-  "action":"initiateCall",
-  "calleeId":"... clientId of callee ...",
-  "callerId":"... clientId of caller ..."
+      "action":"initiateCall",
+      "calleeId":"... clientId of callee ...",
+      "callerId":"... clientId of caller ..."
   }
+  ```
+  
 - Receive "participantToken" in reply:
+  ```
   {
-  "token": "eyJhbGcEXAMPLEiIsInR5cCI6IkpXVCJ9.eyJhIEXAMPLEiOiIxODY1ZTVkYy1mY2I5LTRhOTUtOTA1Ny1jNjNmEXAMPLEEXAMPLEEXAMPENDI4MzEwMDksImlzcyI6InByZDowMCJ9.hl4VFBB-apesVgaEPEXAMPLENjAmwt9J9Zok"
+    "token": "eyJhbGcEXAMPLEiIsInR5cCI6IkpXVCJ9.eyJhIEXAMPLEiOiIxODY1ZTVkYy1mY2I5LTRhOTUtOTA1Ny1jNjNmEXAMPLEEXAMPLEEXAMPENDI4MzEwMDksImlzcyI6InByZDowMCJ9.hl4VFBB-apesVgaEPEXAMPLENjAmwt9J9Zok"
   }
+  ```
+  
 - Use token to join WebRTC session
 
 ### When the call ends, each user hangs up:
 
 - Each user cleans up their own call leg:
+  ```
   {
-  "action":"endCall",
-  "clientId":"... clientId of self ..."
+      "action":"endCall",
+      "clientId":"... clientId of self ..."
   }
+  ```
+  
 - User can now make or receive another call
 
 ### Bulk cleanup option:
 
 - Delete a list of clientIds, closing down WebRTC sessions, participants, etc.
 - Does not delete Person records
+  ```
   {
-  "action":"deleteClientIds",
-  "clientIds":["..clientId A..", "..clientId B..", "..clientId C.."]
+      "action":"deleteClientIds",
+      "clientIds":["..clientId A..", "..clientId B..", "..clientId C.."]
   }
+  ```
 
 ## Recommended Reading
 
