@@ -1,0 +1,27 @@
+[
+  {
+    "category": "api",
+    "resourceName": "webrtcsamplemobileapp",
+    "service": "AppSync"
+  },
+  {
+    "category": "api",
+    "resourceName": "apiEndpoint",
+    "service": "API Gateway"
+  },
+  {
+    "category": "function",
+    "resourceName": "webrtcPushNotifier",
+    "service": "Lambda"
+  },
+  {
+    "category": "auth",
+    "resourceName": "webrtcsamplemobileapfe96852c",
+    "service": "Cognito"
+  },
+  {
+    "category": "analytics",
+    "resourceName": "webrtcMobileDemoApp",
+    "service": "Pinpoint"
+  }
+]

@@ -1,0 +1,133 @@
+{
+  "stackName": "amplify-webrtcsamplemobileap-staging-180209",
+  "props": {
+    "templateFile": "root-stack-template.json",
+    "parameters": {
+      "AuthRoleName": "amplify-webrtcsamplemobileap-staging-180209-authRole",
+      "UnauthRoleName": "amplify-webrtcsamplemobileap-staging-180209-unauthRole",
+      "DeploymentBucketName": "amplify-webrtcsamplemobileap-staging-180209-deployment"
+    },
+    "preserveLogicalIds": true,
+    "loadNestedStacks": {
+      "analyticswebrtcMobileDemoApp": {
+        "templateFile": "analytics/webrtcMobileDemoApp/pinpoint-cloudformation-template.json",
+        "parameters": {
+          "appName": "webrtcMobileDemoApp",
+          "roleName": "pinpointLambdaRoled21380eb",
+          "cloudformationPolicyName": "cloudformationPolicyd21380eb",
+          "cloudWatchPolicyName": "cloudWatchPolicyd21380eb",
+          "pinpointPolicyName": "pinpointPolicyd21380eb",
+          "authPolicyName": "pinpoint_amplify_d21380eb",
+          "unauthPolicyName": "pinpoint_amplify_d21380eb",
+          "env": "staging"
+        },
+        "preserveLogicalIds": true,
+        "loadNestedStacks": {}
+      },
+      "apiapiEndpoint": {
+        "templateFile": "api/apiEndpoint/apiEndpoint-cloudformation-template.json",
+        "parameters": {
+          "env": "staging"
+        },
+        "preserveLogicalIds": true,
+        "loadNestedStacks": {}
+      },
+      "apiwebrtcsamplemobileapp": {
+        "templateFile": "api/webrtcsamplemobileapp/cloudformation-template.json",
+        "parameters": {
+          "AppSyncApiName": "webrtcsamplemobileapp",
+          "DynamoDBBillingMode": "PAY_PER_REQUEST",
+          "DynamoDBEnableServerSideEncryption": false,
+          "S3DeploymentBucket": "amplify-webrtcsamplemobileap-staging-180209-deployment",
+          "S3DeploymentRootKey": "amplify-appsync-files/01f086657b378f60cc41607aa65b03e10a89db1f",
+          "env": "staging"
+        },
+        "preserveLogicalIds": true,
+        "loadNestedStacks": {
+          "CustomResourcesjson": {
+            "templateFile": "api/webrtcsamplemobileapp/amplify-appsync-files/stacks/CustomResources.json",
+            "preserveLogicalIds": true,
+            "loadNestedStacks": {}
+          },
+          "DeviceInfo": {
+            "templateFile": "api/webrtcsamplemobileapp/amplify-appsync-files/stacks/DeviceInfo.json",
+            "preserveLogicalIds": true,
+            "loadNestedStacks": {}
+          },
+          "Person": {
+            "templateFile": "api/webrtcsamplemobileapp/amplify-appsync-files/stacks/Person.json",
+            "preserveLogicalIds": true,
+            "loadNestedStacks": {}
+          }
+        }
+      },
+      "authwebrtcsamplemobileapfe96852c": {
+        "templateFile": "auth/webrtcsamplemobileapfe96852c/webrtcsamplemobileapfe96852c-cloudformation-template.json",
+        "parameters": {
+          "identityPoolName": "webrtcsamplemobileapfe96852c_identitypool_fe96852c",
+          "allowUnauthenticatedIdentities": false,
+          "resourceNameTruncated": "webrtcfe96852c",
+          "userPoolName": "webrtcsamplemobileapfe96852c_userpool_fe96852c",
+          "autoVerifiedAttributes": [
+            "phone_number"
+          ],
+          "mfaConfiguration": "OFF",
+          "mfaTypes": [
+            "SMS Text Message"
+          ],
+          "smsAuthenticationMessage": "Your authentication code is {####}",
+          "smsVerificationMessage": "Your verification code is {####}",
+          "emailVerificationSubject": "Your verification code",
+          "emailVerificationMessage": "Your verification code is {####}",
+          "defaultPasswordPolicy": false,
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": [],
+          "requiredAttributes": [
+            "email"
+          ],
+          "aliasAttributes": [],
+          "userpoolClientGenerateSecret": false,
+          "userpoolClientRefreshTokenValidity": 30,
+          "userpoolClientWriteAttributes": [
+            "email"
+          ],
+          "userpoolClientReadAttributes": [
+            "email"
+          ],
+          "userpoolClientLambdaRole": "webrtcfe96852c_userpoolclient_lambda_role",
+          "userpoolClientSetAttributes": false,
+          "sharedId": "fe96852c",
+          "resourceName": "webrtcsamplemobileapfe96852c",
+          "authSelections": "identityPoolAndUserPool",
+          "useDefault": "manual",
+          "userPoolGroupList": [],
+          "serviceName": "Cognito",
+          "usernameCaseSensitive": false,
+          "useEnabledMfas": true,
+          "breakCircularDependency": true,
+          "dependsOn": [],
+          "thirdPartyAuth": false,
+          "userPoolGroups": false,
+          "adminQueries": false,
+          "triggers": "{}",
+          "hostedUI": false,
+          "authProviders": [],
+          "permissions": [],
+          "env": "staging"
+        },
+        "preserveLogicalIds": true,
+        "loadNestedStacks": {}
+      },
+      "functionwebrtcPushNotifier": {
+        "templateFile": "function/webrtcPushNotifier/webrtcPushNotifier-cloudformation-template.json",
+        "parameters": {
+          "deploymentBucketName": "amplify-webrtcsamplemobileap-staging-180209-deployment",
+          "s3Key": "amplify-builds/webrtcPushNotifier-56723455504f69442b61-build.zip",
+          "env": "staging"
+        },
+        "preserveLogicalIds": true,
+        "loadNestedStacks": {}
+      }
+    }
+  }
+}
