@@ -19,6 +19,20 @@
                     ]
                 }
             }
+        },
+        "apiEndpoint": {
+            "service": "API Gateway",
+            "providerPlugin": "awscloudformation",
+            "dependsOn": [
+                {
+                    "category": "function",
+                    "resourceName": "webrtcPushNotifier",
+                    "attributes": [
+                        "Name",
+                        "Arn"
+                    ]
+                }
+            ]
         }
     },
     "function": {

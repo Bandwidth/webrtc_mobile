@@ -1,8 +1,11 @@
 package  com.bandwidth.android.ui.login;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
@@ -18,7 +21,10 @@ import android.widget.Toast;
 
 import com.amplifyframework.AmplifyException;
 import com.amplifyframework.api.aws.AWSApiPlugin;
+import com.amplifyframework.api.rest.RestOptions;
+import com.amplifyframework.api.rest.RestResponse;
 import com.amplifyframework.auth.AuthException;
+import com.amplifyframework.auth.AuthSession;
 import com.amplifyframework.auth.AuthUserAttributeKey;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
 import com.amplifyframework.auth.options.AuthSignUpOptions;
@@ -29,16 +35,20 @@ import com.amplifyframework.core.model.query.Where;
 import com.amplifyframework.datastore.AWSDataStorePlugin;
 import com.amplifyframework.datastore.generated.model.DeviceInfo;
 import com.amplifyframework.datastore.generated.model.Person;
+import com.bandwidth.android.BWLibrary;
 import com.bandwidth.android.ListUsersActivity;
 import com.bandwidth.android.databinding.ActivityLoginBinding;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Locale;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -46,6 +56,10 @@ public class LoginActivity extends AppCompatActivity {
 
     private LoginViewModel loginViewModel;
     private ActivityLoginBinding binding;
+
+    // deviceId is the id from DeviceInfo table (this table is specific to demo app implementation)
+    // store it in static variable so it can be used later on when we are calling someone
+    public static String deviceId = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,6 +73,8 @@ public class LoginActivity extends AppCompatActivity {
 
         final EditText usernameEditText = binding.username;
         final EditText passwordEditText = binding.password;
+        final EditText firstnameEditText = binding.firstname;
+        final EditText lastnameEditText = binding.lastname;
         final Button loginButton = binding.login;
         final ProgressBar loadingProgressBar = binding.loading;
 
@@ -136,35 +152,44 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     String userName = usernameEditText.getText().toString();
-                    System.out.println("Login attempt for user " + userName);
+                    String firstname = firstnameEditText.getText().toString();
+                    String lastname = lastnameEditText.getText().toString();
 
-                    Amplify.addPlugin(new AWSCognitoAuthPlugin());
-                    Amplify.addPlugin(new AWSApiPlugin());
-                    Amplify.addPlugin(new AWSDataStorePlugin());
-                    Amplify.configure(getApplicationContext());
+                    System.out.println("Login attempt for user " + userName + ": " + firstname + " : " + lastname);
 
-                    // FIXME hardcoded password for demo
-                    Amplify.Auth.signIn(
-                            userName,
-                            "raleigh123",
-                            result -> loginSuccess(result),
-                            error -> loginFail(error, userName)
-                    );
+//                    Amplify.DataStore.start(
+//                            () -> System.out.println("LoginActivity: Datastore started"),
+//                            error -> System.out.println("LoginActivity: Error starting Datastore " + error.toString())
+//                    );
+
+                    BWLibrary.configureAmplify(getApplicationContext());
+
+                    signIn(userName, firstname, lastname);
+
                 } catch(Exception e) {
                     System.out.println("Error logging in to cognito: " + e.getMessage());
                 }
 
 //                loadingProgressBar.setVisibility(View.VISIBLE);
 //                loginViewModel.login(usernameEditText.getText().toString(),
-//                        ""); // FIXME password set to empty string for demo purposes
+//                        "");
             }
         });
     }
 
-    private void loginSuccess(AuthSignInResult result) {
+    private void signIn(String userName, String firstname, String lastname) {
+        // FIXME hardcoded password for demo
+        Amplify.Auth.signIn(
+                userName,
+                "raleigh123",
+                result -> loginSuccess(result, firstname, lastname),
+                error -> loginFail(error, userName, firstname, lastname)
+        );
+    }
+
+    private void loginSuccess(AuthSignInResult result, String fname, String lname) {
         if(result.isSignInComplete()) {
-            System.out.println("SIGN IN Succeeded");
-            registerClientAndShowUsers();
+            showUsers();
         } else {
             // TODO error handling
             System.out.println("SIGN IN Failed: " + result.toString());
@@ -172,98 +197,110 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    private void loginFail(AuthException err, String userName) {
-        System.out.println("Sign in Exception");
+    private void loginFail(AuthException err, String userName, String fname, String lname) {
         if(err.toString().contains("User does not exist")) {
-            System.out.println("Need to signup user");
-            registerUser(userName);
+            registerUser(userName, fname, lname);
         }
 
     }
 
     // Registers a FCM device token with bandwidth's push notifier api, if it doesn't exist
     // and launches the next activity of showing a list of users
-    private void registerClientAndShowUsers() {
-        String token = getFirebaseDeviceToken();
-        System.out.println("DEVICE TOKEN=" + token);
+    private void registerClientAndShowUsers(String fname, String lname) {
+        String token = BWLibrary.getFirebaseDeviceToken();
+
         try {
-            Amplify.DataStore.query(DeviceInfo.class, Where.matches(DeviceInfo.DEVICE_TOKEN.eq(token)),
-                    devices -> {
-                        System.out.println("DEVICES: "  + devices.toString());
-                        boolean exists = false;
-                        while (devices.hasNext()) {
-                            // FIXME there has to be a better way to determine if this device token exists...
-                            exists = true;
-                            break;
-                        }
-                        if(!exists) {
-                            System.out.println("Registering device!");
-                            registerClient(token);
-                        }
-                        showUsers();
-                    },
-                    failure -> System.out.println("existsDeviceToken query failed: " + failure.toString())
-            );
+            deviceId = registerClient(token);
+
+            savePerson(fname, lname, deviceId);
+            showUsers();
         } catch (Exception e) {
             System.out.println("Exception querying for device: " + e.getMessage());
         }
     }
 
-    private void registerUser(String userName) {
-        AuthSignUpOptions options = AuthSignUpOptions.builder()
-                // TODO change Cognito User Pool to remove email requirement for demo purposes
-                //      currently, email hardcoded to Srikants BW email
-                .userAttribute(AuthUserAttributeKey.email(), "sayengar@bandwidth.com")
+    private void savePerson(String fname, String lname, String deviceId) {
+        Amplify.DataStore.observe(Person.class,
+                started -> System.out.println("Observation began."),
+                change -> System.out.println(change.item().toString()),
+                failure -> System.out.println("Observation failed." + failure),
+                () -> System.out.println("Observation complete.")
+        );
+
+        Person person = Person.builder()
+                .firstName(fname)
+                .lastName(lname)
+                .clientId(deviceId)
                 .build();
 
-        // TODO insert into Person table; create UI for FirstName and LastName
+        Amplify.DataStore.save(person,
+                success -> System.out.println("Saved person " + person.getFirstName()),
+                error -> System.out.println("Could not save person to Datastore" + error)
+        );
+    }
+
+    private void registerUser(String userName, String fname, String lname) {
+        AuthSignUpOptions options = AuthSignUpOptions.builder()
+                // TODO get the email from UI for registrations
+                .userAttribute(AuthUserAttributeKey.email(), "test@test.com")
+                .build();
 
         System.out.println("Attempting to register user " + userName);
         Amplify.Auth.signUp(
                 userName,
                 "raleigh123", // FIXME for demo, we will use this password for everyone
                 options,
-                result -> registerSuccess(result),
-                // TODO handle registration failure
+                result -> registerSuccess(result, fname, lname),
+                // TODO error handling
                 error -> System.out.println("Register Failure: " + error.toString())
                 );
     }
 
-    private void registerSuccess(AuthSignUpResult result) {
+    private void registerSuccess(AuthSignUpResult result, String fname, String lname) {
         System.out.println("Signup succeeded: " + result.toString());
-        registerClientAndShowUsers();
+        registerClientAndShowUsers(fname, lname);
     }
 
+    // fires a new activity, ListUsersActivity
     private void showUsers() {
         System.out.println("showUsers called()");
         Intent i = new Intent(this, ListUsersActivity.class);
+        i.putExtra("redirectFromLogin", "1");
         startActivity(i);
     }
 
-    private String getFirebaseDeviceToken() {
-        String deviceToken = null;
+
+    // This is how you would do API posts using the Amplify wrapper
+    private void apiPostUsingAmplify(String deviceToken) {
+        String json = "{" +
+                "\"action\": \"register\"," +
+                "\"notifyType\": \"GCM\"," +
+                "\"deviceToken\":\"" + deviceToken + "\"" +
+                "}";
         try {
-            Task tokenTask = FirebaseMessaging.getInstance().getToken();
-            Tasks.await(tokenTask);
-            deviceToken = (String)tokenTask.getResult();
-            System.out.println("getFirebaseDeviceToken = " + deviceToken);
-        } catch(Exception e) {
-            System.out.println("Error getting firebaseDeviceToken: " + e.getMessage());
-        } finally {
-            return deviceToken;
+            System.out.println("Trying to use AWSApiPlugin...");
+            RestOptions options = RestOptions.builder()
+                    .addPath("/api")
+                    .addBody(json.getBytes())
+                    .build();
+
+            Amplify.API.post(options,
+                    response -> System.out.println(response.getData().toString()),
+                    error -> System.out.println("LoginActivity: POST failed." + error.toString())
+            );
+        } catch (Exception e) {
+            System.out.println("LoginActivity: Exception trying AWSApiPlugin: " + e.getMessage());
         }
     }
 
-    private void registerClient(String deviceToken) {
-        try {
-            // TODO
-            // is notifyType supposed to be FCM or GCM ?
-            String json = "{" +
-                    "\"action\": \"register\"," +
-                    "\"notifyType\": \"GCM\"," +
-                    "\"deviceToken\":\"" + deviceToken + "\"" +
-                    "}";
+    private String registerClient(String deviceToken) {
+        String json = "{" +
+                "\"action\": \"register\"," +
+                "\"notifyType\": \"GCM\"," +
+                "\"deviceToken\":\"" + deviceToken + "\"" +
+                "}";
 
+        try {
             String registerUrl = "https://eys0a9ycb7.execute-api.us-east-1.amazonaws.com/default/webrtcPushNotifier-staging";
 
             URL url = new URL(registerUrl);
@@ -285,9 +322,13 @@ public class LoginActivity extends AppCompatActivity {
             }
             output = stringBuilder.toString();
             System.out.println("GETTING RESP " + output );
+            JSONObject resp = new JSONObject(output);
+
+            return (String)resp.get("id");
         } catch(Exception e) {
             e.printStackTrace();
             System.out.println("Error registering client " + e.getMessage());
+            return null;
         }
     }
 
@@ -298,5 +339,16 @@ public class LoginActivity extends AppCompatActivity {
 
     private void showLoginFailed(@StringRes Integer errorString) {
         Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void isSignedIn(Context context, AuthSession result) {
+        System.out.println("isSignedIn()");
+
+        if(!result.isSignedIn()) {
+            System.out.println("Not logged in");
+
+            Intent i = new Intent(context, LoginActivity.class);
+            context.startActivity(i);
+        }
     }
 }
