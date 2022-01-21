@@ -2,7 +2,7 @@
 
 ## Resources Used
 
-The backend is hosted on AWS with the following Resources
+The backend is hosted on AWS with the following resources:
 
 | Resource | Description |
 | --- | ----------- |
