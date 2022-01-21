@@ -39,10 +39,10 @@ amplify function update
 </ul>
     
 </li>
-<li>Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server):
-    <ul>
-        This requires creating an account and application with FCM
-    </ul>
+<li>
+
+Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server). This requires creating an account and application with FCM. Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console.
+
 </li>
 </ol>
 
