@@ -157,11 +157,6 @@ public class LoginActivity extends AppCompatActivity {
 
                     System.out.println("Login attempt for user " + userName + ": " + firstname + " : " + lastname);
 
-//                    Amplify.DataStore.start(
-//                            () -> System.out.println("LoginActivity: Datastore started"),
-//                            error -> System.out.println("LoginActivity: Error starting Datastore " + error.toString())
-//                    );
-
                     BWLibrary.configureAmplify(getApplicationContext());
 
                     signIn(userName, firstname, lastname);

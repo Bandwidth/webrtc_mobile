@@ -18,7 +18,6 @@ public class BWLibrary {
 
     public static int getNotificationId(Bundle extras) {
         int notificationId = extras.getInt("notificationId");
-        System.out.println("DismissActivity: notificationId=" + notificationId);
         return notificationId;
     }
 
@@ -28,7 +27,6 @@ public class BWLibrary {
             Task tokenTask = FirebaseMessaging.getInstance().getToken();
             Tasks.await(tokenTask);
             deviceToken = (String)tokenTask.getResult();
-            System.out.println("getFirebaseDeviceToken = " + deviceToken);
         } catch(Exception e) {
             System.out.println("Error getting firebaseDeviceToken: " + e.getMessage());
         } finally {
@@ -40,7 +38,7 @@ public class BWLibrary {
             // Initialize Amplify plugins
             try {
                 Amplify.addPlugin(new AWSCognitoAuthPlugin());
-//                Amplify.addPlugin(new AWSApiPlugin());
+                Amplify.addPlugin(new AWSApiPlugin());
                 Amplify.addPlugin(new AWSDataStorePlugin());
 
                 Amplify.configure(context);

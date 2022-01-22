@@ -102,11 +102,22 @@ The bandwidth webrtc SDK can be found under webrtc/ All the UI components can be
 * Don't force logging in everytime
 * UI field for email during registrations with Cognito
 * UI option to confirm email registrations using OTP. For now, to confirm a registration via amplify CLI, do the following \
-    aws cognito-idp admin-set-user-password \\
-         --user-pool-id <your-user-pool-id> \\
-        --username <username> \\
-        --password <password> \\
+    aws cognito-idp admin-set-user-password \
+         --user-pool-id <your-user-pool-id> \
+        --username YOUR_USER_NAME \
+        --password YOUR_PASSWORD \
         --permanent
 * Hangups (works on the UI but the participant isn't removed from BW WebRTC session)
 * Better ringtone on incoming calls
 * Better UI for incoming call notifications
+
+### Setup Android project with Firebase
+Read https://firebase.google.com/docs/cloud-messaging/android/first-message?authuser=0#create_a_firebase_project 
+on how to setup your Android app with Firebase. You will get a google-services.json file as a result 
+that you need to add to your android project under app/src/ 
+
+### Get started with integrating your Android app with Amplify
+https://docs.amplify.aws/start/getting-started/add-api/q/integration/ios/ provides a pretty nice 
+step by step documentation of how to integrate your app with Amplify for Android and iOS. Amplify 
+is not necessary for hosting your backend but that is the route chosen for this project. You could 
+just as well manage infrastructure for your backend resources yourself.
