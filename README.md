@@ -47,6 +47,170 @@ Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/do
 </li>
 </ol>
 
+
+----
+
+### Login to the AWS console:
+   aws.amazon.com
+
+### Go to Amplify:
+   https://console.aws.amazon.com/amplify/home
+
+### Amplify -> New App -> Build an App
+  - Enter name for the app (eg: bturner-webrtc-mobile)
+  - Wait for Amplify console to complete deployment
+  - Click "Launch Studio"
+  - Wait for Amplify Studio to launch
+  - In upper-right, click "Local setup instructions"
+  - Small window displays a CLI command like this:
+       ```console
+       amplify pull --appId d1examplesf9 --envName staging
+       ```
+  - Copy the CLI command
+
+### Install AWS CLI:
+   https://aws.amazon.com/cli/
+
+### Open new Terminal window:
+
+  - Configure AWS credentials:
+    ```console
+    aws configure
+    ```
+
+  - Install AWS Amplify CLI:
+    ```console
+    curl -sL https://aws-amplify.github.io/amplify-cli/install | bash && $SHELL
+    ```
+
+  - Pull the Amplify project (copied CLI command from earlier)
+    ```console
+    amplify pull --appId d1examplesf9 --envName staging
+    ```
+    - Browser will open and request access for Amplify CLI
+      - NOTE: You MUST already have launched Amplify Studio before this step!
+    - choose 'javascript' for 'type of app'
+    - choose 'none' for 'javascript framework'
+    - choose defaults for the directories
+    - choose YES for 'modify this backend'
+
+  - Add Authentication
+    ```console
+    amplify auth add
+    ```
+    - Default provider
+    - Username
+    - No additional capabilities
+
+  - Add Analytics
+    ```console
+    amplify analytics add
+    ```
+    - Amazon Pinpoint
+    - Select default options
+
+  - Add GraphQL API
+    ```console
+    amplify api add
+    ```
+    - GraphQL
+    - Blank Schema
+    - Edit Schema: YES
+    - Paste schema into editor, then save:
+
+```
+type Person @model @auth(rules: [{ allow: public }]) {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  clientId: String!
+}
+
+type DeviceInfo @model @auth(rules: [{ allow: public }]) {
+  id: ID!
+  notifyType: String!
+  deviceToken: String!
+
+  sessionId: String
+  participantId: String
+  participantToken: String
+}
+```
+  - Add Function
+    ```console
+    amplify function add
+    ```
+    - choose "Lambda function"
+    - choose "NodeJS"
+    - choose "Hello World"
+    - choose YES to "advanced settings"
+      - choose "Yes" to "other resources"
+      - Add API, Analytics, Storage
+         - Allow ALL operations for all resources
+      - No recurring invocations
+      - No Lambda layers
+      - YES environment variables:
+      ```
+          PINPOINT_APP_ID 
+          GRAPH_QL_KEY 
+          GRAPH_QL_API_URL  -- Use placeholder values for all vars (for now)
+          BW_ACCOUNT_ID 
+          BW_USERNAME 
+          BW_PASSWORD
+      ```
+      - No secret values
+      - Yes edit lambda function
+        - Paste Lambda function code into editor, then save:
+
+         *** Lambda function code file ***
+         
+  - Add REST API
+    ```console
+    amplify api add
+    ```
+    - REST
+    - Path:  ``` /api ```
+    - Use existing lambda function
+    - No restrictions
+    - No more APIs
+
+  - Push project
+    ```console
+    amplify push
+    ```
+    - select defaults to generate code, compile schemas, etc.
+    - wait for project to finish deploying
+    - Copy the output values:
+    ```
+       GraphQL endpoint: https://7bEXAMPLEfyu.appsync-api.us-east-1.amazonaws.com/graphql
+       GraphQL API KEY: da2-egolfEXAMPLEdv37wjtm
+       REST API endpoint: https://jmEXAMPLE4i.execute-api.us-east-1.amazonaws.com/staging
+    ```
+
+  - Configure Amazon Pinpoint
+    https://console.aws.amazon.com/pinpoint/home
+    - Choose the newly made Pinpoint project
+    - Copy the ProjectID
+      eg: ``` 4d8065387dexample9f1d680b399 ```
+    - Settings -> Push Notifications -> Edit
+    - Add FCM / APNs keys
+
+  - Update Environment Variables for the Lambda
+```console
+     amplify function update
+          PINPOINT_APP_ID   -- from Pinpoint ProjectID
+          GRAPH_QL_KEY      -- from Amplify push output
+          GRAPH_QL_API_URL  -- from Amplify push output
+```
+
+  - Push final project
+    ```console
+    amplify push
+    ```
+    - Back end should now be up & configured to run
+### Testing:
+    - todo
+
 ## Resources Used
 
 The backend is hosted on AWS with the following resources:
