@@ -1,51 +1,231 @@
-# Documentation for our Backend
+# Backend Documentation
 
 ## Installation & Building
 
-<ol>
-<li>
-Install Amplify CLI
+### Login to the AWS console:
+   aws.amazon.com
 
+### Go to Amplify:
+   https://console.aws.amazon.com/amplify/home
+
+### Amplify -> New App -> Build an App
+  - Enter name for the app (eg: bturner-webrtc-mobile)
+  - Wait for Amplify console to complete deployment
+  - Click "Launch Studio"
+  - Wait for Amplify Studio to launch
+  - In upper-right, click "Local setup instructions"
+  - Small window displays a CLI command like this:
+       ```console
+       amplify pull --appId d1examplesf9 --envName staging
+       ```
+  - Copy the CLI command
+
+### Install AWS CLI:
+   https://aws.amazon.com/cli/
+
+### Open new Terminal window
+
+  - **Configure AWS credentials:**
+    ```console
+    aws configure
+    ```
+
+  - **Install AWS Amplify CLI:**
+    ```console
+    curl -sL https://aws-amplify.github.io/amplify-cli/install | bash && $SHELL
+    ```
+
+  - **Pull the Amplify project (copied CLI command from earlier)**
+    ```console
+    amplify pull --appId d1examplesf9 --envName staging
+    ```
+    - Browser will open and request access for Amplify CLI
+      - NOTE: You MUST already have launched Amplify Studio before this step!
+    - choose 'javascript' for 'type of app'
+    - choose 'none' for 'javascript framework'
+    - choose defaults for the directories
+    - choose YES for 'modify this backend'
+
+  - **Add Authentication**
+    ```console
+    amplify auth add
+    ```
+    - Default provider
+    - Username
+    - No additional capabilities
+
+  - **Add Analytics**
+    ```console
+    amplify analytics add
+    ```
+    - Amazon Pinpoint
+    - Select default options
+
+  - **Add GraphQL API**
+    ```console
+    amplify api add
+    ```
+    - GraphQL
+    - Blank Schema
+    - Edit Schema: YES
+    - Paste schema into editor, then save:
+
+```
+type Person @model @auth(rules: [{ allow: public }]) {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  clientId: String!
+}
+
+type DeviceInfo @model @auth(rules: [{ allow: public }]) {
+  id: ID!
+  notifyType: String!
+  deviceToken: String!
+
+  sessionId: String
+  participantId: String
+  participantToken: String
+}
+```
+  - **Add Function**
+    ```console
+    amplify function add
+    ```
+    - choose "Lambda function"
+    - choose "NodeJS"
+    - choose "Hello World"
+    - choose YES to "advanced settings"
+      - choose "Yes" to "other resources"
+      - Add API, Analytics, Storage
+         - Allow ALL operations for all resources
+      - No recurring invocations
+      - No Lambda layers
+      - YES environment variables:
+      ```
+          PINPOINT_APP_ID 
+          GRAPH_QL_KEY 
+          GRAPH_QL_API_URL  -- Use placeholder values for all vars (for now)
+          BW_ACCOUNT_ID 
+          BW_USERNAME 
+          BW_PASSWORD
+      ```
+      - No secret values
+      - Yes edit lambda function
+        - Paste Lambda function code into editor, then save:
+
+         *** Lambda function code file ***
+         
+  - **Add REST API**
+    ```console
+    amplify api add
+    ```
+    - REST
+    - Path:  ``` /api ```
+    - Use existing lambda function
+    - No restrictions
+    - No more APIs
+
+  - **Push project**
+    ```console
+    amplify push
+    ```
+    - select defaults to generate code, compile schemas, etc.
+    - wait for project to finish deploying
+    - Copy the output values:
+    ```
+       GraphQL endpoint: https://7bEXAMPLEfyu.appsync-api.us-east-1.amazonaws.com/graphql
+       GraphQL API KEY: da2-egolfEXAMPLEdv37wjtm
+       REST API endpoint: https://jmEXAMPLE4i.execute-api.us-east-1.amazonaws.com/staging
+    ```
+
+  - **Configure Amazon Pinpoint**
+    https://console.aws.amazon.com/pinpoint/home
+    - Choose the newly made Pinpoint project
+    - Copy the ProjectID
+      eg: ``` 4d8065387dexample9f1d680b399 ```
+    - Settings -> Push Notifications -> Edit
+    - Add [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server)
+      - This requires creating an account and application with FCM.
+      - Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console.
+    - TODO: Similar steps will be performed to upload a `.p12` certificate to enable iOS notifications when an iOS version is available.
+
+
+  - **Update Environment Variables for the Lambda** ([docs here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli/))
 ```console
-curl -sL https://aws-amplify.github.io/amplify-cli/install | bash && $SHELL
+     amplify function update
+          PINPOINT_APP_ID   -- from Pinpoint ProjectID
+          GRAPH_QL_KEY      -- from Amplify push output
+          GRAPH_QL_API_URL  -- from Amplify push output
 ```
 
-</li>
-<li>
-Create an Amplify project in Amplify Studio and pull a local version
+  - **Push final project**
+    ```console
+    amplify push
+    ```
+    - Back end should now be up & configured to run
 
-```console
-amplify pull --appId {appId} --envName staging
-```
 
-</li>
-<li>
-Replace the local Amplify project source with the source from this repo
-</li>
-<li>
+### Testing
 
-Update the Amplify project configuration with the following environment variables ([click here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli/)):
-
-```console
-amplify function update
-```
-
-<ul>
-    <li>PINPOINT_APP_ID</li>
-    <li>GRAPH_QL_KEY</li>
-    <li>GRAPH_QL_API_URL</li>
-    <li>BW_ACCOUNT_ID</li>
-    <li>BW_USERNAME</li>
-    <li>BW_PASSWORD</li>
-</ul>
+- Using curl or Postman, etc. you can invoke the Lambda API to see if it is running correctly
+- POST to the REST API endpoint returned by ``` amplify status ```
+   
+- **Register a new user (POST):**
+    ```
+    {
+        "action":"register",
+        "notifyType": "GCM",
+        "deviceToken": "....",
+    }
+    ```
+    - Returns a clientId:
+    ```
+    {
+        "id": "c1aae098-7da1-4361-812f-91eea97a1f17",
+        ...
+    }
+    ```
     
-</li>
-<li>
+- **Initiate a call (POST):**
+    ```
+    {
+        "action":"initiateCall",
+        "calleeId":"c1aae098-7da1-4361-812f-91eea97a1f17",
+        "callerId":"d84f722c-ba28-42d6-a04e-0ca9a3be5604"
+    }
+    ```
+    - Returns a participantToken (used to join a Bandwidth WebRTC session):
+    ```
+    {
+        "token": "c1aae098-7da1-4361-812f-91eea97a1f17"
+    }
+    ```
 
-Update Pinpoint Application with [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server). This requires creating an account and application with FCM. Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console. TODO: Similar steps will be performed to upload a `.p12` certificate to enable iOS notifications when an iOS version is available.
-
-</li>
-</ol>
+- **End a call (POST):**
+    ```
+    {
+        "action": "endCall",
+        "clientId": "c1aae098-7da1-4361-812f-91eea97a1f17"
+    }
+    ```
+    - Returns:
+    ```
+    {
+        "message": "success"
+    }
+    ```
+    
+- **Delete clients (POST):**
+    ```
+    {
+        "action":"deleteClientIds",
+        "clientIds":[
+            "c1aae098-7da1-4361-812f-91eea97a1f17",
+            "d84f722c-ba28-42d6-a04e-0ca9a3be5604"
+        ]
+    }
+    ```
 
 ## Resources Used
 
@@ -152,8 +332,4 @@ Rough API call flow between front end and back end
         </ul>
     </li>
 </ul>
-
-
-[![amplifybutton](https://oneclick.amplifyapp.com/button.svg)](https://console.aws.amazon.com/amplify/home#/deploy?repo=https://github.com/Bandwidth/webrtc_mobile)
-
 
