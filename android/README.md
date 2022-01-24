@@ -114,7 +114,7 @@ The bandwidth webrtc SDK can be found under webrtc/ All the UI components can be
 ### Setup Android project with Firebase
 Read https://firebase.google.com/docs/cloud-messaging/android/first-message?authuser=0#create_a_firebase_project 
 on how to setup your Android app with Firebase. You will get a google-services.json file as a result 
-that you need to add to your android project under app/src/ 
+that you need to add to your android project under app/
 
 ### Get started with integrating your Android app with Amplify
 https://docs.amplify.aws/start/getting-started/add-api/q/integration/ios/ provides a pretty nice 
