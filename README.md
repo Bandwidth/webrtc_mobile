@@ -1,6 +1,21 @@
-# Backend Documentation
+# Native iOS/Android calling via Bandwidth WebRTC
 
-## Installation & Building
+> **ALPHA RELEASE** Please note, this project is a rapid prototype and is not a stable sample to build from!
+
+- [x] AWS Amplify project setup instructions
+- [x] AWS Lambda sample back-end code
+- [x] Android sample native app
+- [ ] AWS CDK deployment scripts
+- [ ] iOS sample native app
+
+## Contents:
+- [Android README](https://github.com/Bandwidth/webrtc_mobile/tree/main/android#readme)
+- iOS README -- TODO
+- [AWS Lambda Backend](https://github.com/Bandwidth/webrtc_mobile#backend--installation--building)
+
+## Backend : Installation & Building
+
+> The included CDK project to deploy the backend does not currently work due to some CDK vs Amplify versioning issues which should be resolved in a few weeks.  We appologize for the inconvenience - we have documented the complete sequence to create and deploy a working Amplify backend using the AWS Console and AWS CLI below.
 
 ### Login to the AWS console:
    aws.amazon.com
@@ -114,7 +129,7 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
       - Yes edit lambda function
         - Paste Lambda function code into editor, then save:
 
-         *** Lambda function code file ***
+         [Lambda Function: index.js](https://github.com/Bandwidth/webrtc_mobile/blob/main/backend/index.js)
          
   - **Add REST API**
     ```console
@@ -187,43 +202,11 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
     }
     ```
     
-- **Initiate a call (POST):**
-    ```
-    {
-        "action":"initiateCall",
-        "calleeId":"c1aae098-7da1-4361-812f-91eea97a1f17",
-        "callerId":"d84f722c-ba28-42d6-a04e-0ca9a3be5604"
-    }
-    ```
-    - Returns a participantToken (used to join a Bandwidth WebRTC session):
-    ```
-    {
-        "token": "c1aae098-7da1-4361-812f-91eea97a1f17"
-    }
-    ```
-
-- **End a call (POST):**
-    ```
-    {
-        "action": "endCall",
-        "clientId": "c1aae098-7da1-4361-812f-91eea97a1f17"
-    }
-    ```
-    - Returns:
-    ```
-    {
-        "message": "success"
-    }
-    ```
-    
 - **Delete clients (POST):**
     ```
     {
         "action":"deleteClientIds",
-        "clientIds":[
-            "c1aae098-7da1-4361-812f-91eea97a1f17",
-            "d84f722c-ba28-42d6-a04e-0ca9a3be5604"
-        ]
+        "clientIds":["c1aae098-7da1-4361-812f-91eea97a1f17"]
     }
     ```
 
