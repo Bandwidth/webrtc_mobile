@@ -122,6 +122,5 @@ The bandwidth webrtc SDK can be found under webrtc/ All the UI components can be
         --username YOUR_USER_NAME \
         --password YOUR_PASSWORD \
         --permanent
-- Hangups (works on the UI but the participant isn't removed from BW WebRTC session)
 - Better ringtone on incoming calls
 - Better UI for incoming call notifications
