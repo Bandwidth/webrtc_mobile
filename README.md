@@ -1,6 +1,6 @@
 # Native iOS/Android calling via Bandwidth WebRTC
 
-> **ALPHA RELEASE** Please note, this project is a rapid prototype and is not a stable sample to build from!
+> **NOTICE: SAMPLE CODE** This project is a rapid prototype it is meant as a sample app not production code!
 
 - [x] AWS Amplify project setup instructions
 - [x] AWS Lambda sample back-end code
