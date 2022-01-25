@@ -59,8 +59,7 @@ const { print } = graphql;
 import AWS from 'aws-sdk'
 
 import BandwidthWebRTC from "@bandwidth/webrtc"
-import uuid from 'uuid';
-const { v1: uuidv1 } = uuid;
+import { v1 as uuidv1 } from 'uuid';
 
 
 // ---------------------------------------
