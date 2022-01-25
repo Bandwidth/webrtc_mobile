@@ -14,6 +14,10 @@
 - iOS README -- TODO
 - [Backend: AWS Amplify Install & Configure](https://github.com/Bandwidth/webrtc_mobile#backend--installation--building)
 
+## Sample Message Flow
+
+![Sample Message Flow](/WebRTC-Mobile-App-Ladder-Diagram.png)
+
 ## Backend : Installation & Building
 
 > The included CDK project to deploy the backend does not currently work due to some CDK vs Amplify versioning issues which should be resolved in a few weeks.  We appologize for the inconvenience - we have documented the complete sequence to create and deploy a working Amplify backend using the AWS Console and AWS CLI below.
