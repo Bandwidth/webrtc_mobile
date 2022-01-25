@@ -84,14 +84,14 @@ class MainActivity extends AppCompatActivity {
 - **MainActivity** \
     This activity is invoked when a) you call someone and b) you are called.
 
-    ***When you call someone***
+    ***When you call someone*** \
         This activity is passed the Callee's deviceId as a parameter. The caller's deviceId is stored on
         login. The activity then calls the backend api (see comments above getParticipantToken() in
         MainActivity for detailed explanation) which responds with a Bandwidth webrtc participant token
         for the caller. The participant token is then used to publish the caller's mediastream to the
         bandwidth webrtc session created by the backend.
 
-    ***When you are called***
+    ***When you are called*** \
         MainActivity is also called when a user responds to a push notification. To further elaborate, the
         backend which responds with a participant token to a caller's request to initiate a call, also fires
         a push notification via Amazon Pinpoint to the callee. The notification has the callee's bandwidth
