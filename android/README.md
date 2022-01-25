@@ -8,14 +8,12 @@ The Bandwidth Android SDK makes it quick and easy to build an excellent audio an
 
     * **Android**
 
-2. **Setup Android project with Firebase**
-
+2. **Setup Android project with Firebase** \
         Read https://firebase.google.com/docs/cloud-messaging/android/first-message?authuser=0#create_a_firebase_project
         on how to setup your Android app with Firebase. You will get a google-services.json file as a result
         that you need to add to your android project under app/
 
-3. **Integrating your Android app with Amplify**
-
+3. **Integrating your Android app with Amplify** \
         https://docs.amplify.aws/start/getting-started/add-api/q/integration/ios/ provides a pretty nice
         step by step documentation of how to integrate your app with Amplify for Android and iOS.
         To get the sample app working, assuming you have setup your backend using Amplify (see Readme in repo root), issue the following command from your android directoy
