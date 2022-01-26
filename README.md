@@ -116,6 +116,7 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
   participantToken: String
 }
 ```
+
   - **Add Function**
     ```console
     amplify function add
@@ -199,13 +200,24 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
       - **TODO:** Similar steps will be performed to upload a `.p12` certificate to enable iOS notifications when an iOS version is available.
 
 
+   - **Update GraphQL with AutoMerge**
+      ```console
+      amplify api update
+      ```
+      - GraphQL
+      - Enable conflict detection
+      - Auto Merge
+      - YES override default per-model
+      - Select ALL models
+      - Select Auto Merge for each model
+
   - **Update Environment Variables for the Lambda** ([docs here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli/))
-```console
-     amplify function update
+      ```console
+      amplify function update
           PINPOINT_APP_ID   -- from Pinpoint ProjectID
           GRAPH_QL_KEY      -- from Amplify push output
           GRAPH_QL_API_URL  -- from Amplify push output
-```
+      ```
 
   - **Push final project**
     ```console
