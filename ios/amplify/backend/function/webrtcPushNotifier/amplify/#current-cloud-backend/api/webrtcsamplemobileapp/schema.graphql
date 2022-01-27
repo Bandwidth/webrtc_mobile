@@ -1,0 +1,17 @@
+type Person @model @auth(rules: [{ allow: public }]) {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  clientId: String!
+}
+
+type DeviceInfo @model @auth(rules: [{ allow: public }]) {
+  id: ID!
+  clientId: String!
+  deviceType: String!
+  deviceId: String!
+  deviceToken: String!
+
+  participantId: String
+  participantToken: String
+}

@@ -1,0 +1,176 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-webrtcsamplemobileap-staging-180209-authRole",
+      "UnauthRoleArn": "arn:aws:iam::744521640009:role/amplify-webrtcsamplemobileap-staging-180209-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::744521640009:role/amplify-webrtcsamplemobileap-staging-180209-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-webrtcsamplemobileap-staging-180209-deployment",
+      "UnauthRoleName": "amplify-webrtcsamplemobileap-staging-180209-unauthRole",
+      "StackName": "amplify-webrtcsamplemobileap-staging-180209",
+      "StackId": "arn:aws:cloudformation:us-east-1:744521640009:stack/amplify-webrtcsamplemobileap-staging-180209/6e1f3d90-723f-11ec-bdb5-0e4b061813b3",
+      "AmplifyAppId": "d33uayh82tltzr"
+    }
+  },
+  "api": {
+    "webrtcsamplemobileapp": {
+      "service": "AppSync",
+      "providerPlugin": "awscloudformation",
+      "output": {
+        "authConfig": {
+          "defaultAuthentication": {
+            "authenticationType": "API_KEY",
+            "apiKeyConfig": {
+              "apiKeyExpirationDays": 30,
+              "description": "api key description"
+            }
+          },
+          "additionalAuthenticationProviders": [
+            {
+              "authenticationType": "AWS_IAM"
+            }
+          ]
+        },
+        "GraphQLAPIIdOutput": "4czvi6s64bgbfdikj32kiruzwq",
+        "GraphQLAPIEndpointOutput": "https://fuga4zxjtjhr5nrv7trxqct2zi.appsync-api.us-east-1.amazonaws.com/graphql",
+        "GraphQLAPIKeyOutput": "da2-pjxkbv3xk5a6vmwbpvzrc2xznu"
+      },
+      "lastPushTimeStamp": "2022-01-26T20:11:54.707Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-webrtcsamplemobileap-staging-180209-deployment/amplify-cfn-templates/api/cloudformation-template.json",
+        "logicalId": "apiwebrtcsamplemobileapp"
+      }
+    },
+    "apiEndpoint": {
+      "service": "API Gateway",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [
+        {
+          "category": "function",
+          "resourceName": "webrtcPushNotifier",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        }
+      ],
+      "output": {
+        "ApiName": "apiEndpoint",
+        "RootUrl": "https://t9zcu8ur7g.execute-api.us-east-1.amazonaws.com/staging",
+        "ApiId": "t9zcu8ur7g"
+      },
+      "lastPushTimeStamp": "2022-01-26T20:11:54.713Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-webrtcsamplemobileap-staging-180209-deployment/amplify-cfn-templates/api/apiEndpoint-cloudformation-template.json",
+        "logicalId": "apiapiEndpoint"
+      }
+    }
+  },
+  "function": {
+    "webrtcPushNotifier": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [],
+      "output": {
+        "Region": "us-east-1",
+        "Arn": "arn:aws:lambda:us-east-1:744521640009:function:webrtcPushNotifier-staging",
+        "Name": "webrtcPushNotifier-staging",
+        "LambdaExecutionRole": "webrtcsamplemobileapLambdaRole1d2e2f98-staging"
+      },
+      "lastPushTimeStamp": "2022-01-26T20:11:54.721Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-webrtcsamplemobileap-staging-180209-deployment/amplify-cfn-templates/function/webrtcPushNotifier-cloudformation-template.json",
+        "logicalId": "functionwebrtcPushNotifier"
+      },
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-webrtcsamplemobileap-staging-180209-deployment",
+        "s3Key": "amplify-builds/webrtcPushNotifier-466f6169724657507269-build.zip"
+      },
+      "lastBuildTimeStamp": "2022-01-26T19:43:40.075Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2022-01-26T19:43:46.040Z",
+      "distZipFilename": "webrtcPushNotifier-466f6169724657507269-build.zip",
+      "lastPushDirHash": "8RVIf4BplnidIOjnF0299TFyOUA="
+    }
+  },
+  "auth": {
+    "webrtcsamplemobileapfe96852c": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false,
+      "frontendAuthConfig": {
+        "socialProviders": [],
+        "usernameAttributes": [],
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "verificationMechanisms": [
+          "PHONE_NUMBER"
+        ]
+      },
+      "output": {
+        "CreatedSNSRole": "arn:aws:iam::744521640009:role/snsfe96852c180209-staging",
+        "UserPoolId": "us-east-1_s9SHxLAXw",
+        "AppClientIDWeb": "44f6p2tient82esv9ltpv10ftf",
+        "AppClientID": "33qj9uflg86u11tnkj0rg0v1a5",
+        "IdentityPoolId": "us-east-1:83245199-8fe9-4c8d-8966-527f50a1660a",
+        "UserPoolArn": "arn:aws:cognito-idp:us-east-1:744521640009:userpool/us-east-1_s9SHxLAXw",
+        "IdentityPoolName": "webrtcsamplemobileapfe96852c_identitypool_fe96852c__staging",
+        "UserPoolName": "webrtcsamplemobileapfe96852c_userpool_fe96852c"
+      },
+      "lastPushTimeStamp": "2022-01-26T20:11:54.728Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-webrtcsamplemobileap-staging-180209-deployment/amplify-cfn-templates/auth/webrtcsamplemobileapfe96852c-cloudformation-template.json",
+        "logicalId": "authwebrtcsamplemobileapfe96852c"
+      }
+    }
+  },
+  "analytics": {
+    "webrtcMobileDemoApp": {
+      "service": "Pinpoint",
+      "providerPlugin": "awscloudformation",
+      "output": {
+        "appName": "webrtcMobileDemoApp-staging",
+        "Region": "us-east-1",
+        "Id": "48b794aee8d04bf1b59f1ba89b31abcc"
+      },
+      "lastPushTimeStamp": "2022-01-26T20:11:54.734Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-webrtcsamplemobileap-staging-180209-deployment/amplify-cfn-templates/analytics/pinpoint-cloudformation-template.json",
+        "logicalId": "analyticswebrtcMobileDemoApp"
+      }
+    }
+  },
+  "notifications": {
+    "webrtcMobileDemoApp": {
+      "service": "Pinpoint",
+      "output": {
+        "Name": "webrtcMobileDemoApp-staging",
+        "Id": "50227f7582ed413db7bff87066a8ba33",
+        "Region": "us-east-1",
+        "FCM": {
+          "ApplicationId": "50227f7582ed413db7bff87066a8ba33",
+          "CreationDate": "2022-01-10T21:10:21.294Z",
+          "Enabled": true,
+          "HasCredential": true,
+          "Id": "gcm",
+          "IsArchived": false,
+          "LastModifiedDate": "2022-01-13T21:42:15.554Z",
+          "Platform": "GCM",
+          "Version": 4
+        }
+      },
+      "lastPushTimeStamp": "2022-01-26T20:11:57.537Z"
+    }
+  }
+}
