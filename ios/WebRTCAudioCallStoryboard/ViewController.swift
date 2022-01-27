@@ -53,6 +53,15 @@ class ViewController: UIViewController {
             
             connectBarButtonItem.title = "Connect"
             isConnected = false
+            
+            endCall {
+                DispatchQueue.main.async {
+                    self.statusLabel.text = "Online, no call"
+    //                self.callButton.isEnabled = true
+                    self.endCallButton.isEnabled = false
+                }
+            }
+            
         } else {
             // Grab the Bandwidth provided token from your hosted server application.
             // retrieve caller and callee ids
