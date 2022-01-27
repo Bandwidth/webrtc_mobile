@@ -1,6 +1,6 @@
 # Native iOS/Android calling via Bandwidth WebRTC
 
-> **ALPHA RELEASE** Please note, this project is a rapid prototype and is not a stable sample to build from!
+> **NOTICE: SAMPLE CODE** This project is a rapid prototype it is meant as a sample app not production code!
 
 - [x] AWS Amplify project setup instructions
 - [x] AWS Lambda sample back-end code
@@ -9,9 +9,14 @@
 - [ ] iOS sample native app
 
 ## Contents:
-- [Android README](https://github.com/Bandwidth/webrtc_mobile/tree/main/android#readme)
+- [Android: Setup Firebase Project](https://firebase.google.com/docs/cloud-messaging/android/first-message?authuser=0#create_a_firebase_project)
+- [Android: WebRTC Sample App README](https://github.com/Bandwidth/webrtc_mobile/tree/main/android#readme)
 - iOS README -- TODO
-- [AWS Lambda Backend](https://github.com/Bandwidth/webrtc_mobile#backend--installation--building)
+- [Backend: AWS Amplify Install & Configure](https://github.com/Bandwidth/webrtc_mobile#backend--installation--building)
+
+## Sample Message Flow
+
+![Sample Message Flow](/WebRTC-Mobile-App-Ladder-Diagram.png)
 
 ## Backend : Installation & Building
 
@@ -31,7 +36,7 @@
   - In upper-right, click "Local setup instructions"
   - Small window displays a CLI command like this:
        ```console
-       amplify pull --appId d1examplesf9 --envName staging
+       (EXAMPLE) amplify pull --appId <<APP_ID>> --envName staging
        ```
   - Copy the CLI command
 
@@ -40,6 +45,7 @@
 
 ### Open new Terminal window
 
+  - You will need your AWS credentials (API Key and Token) from an [AWS IAM](https://console.aws.amazon.com/iamv2/home#/users) user
   - **Configure AWS credentials:**
     ```console
     aws configure
@@ -49,23 +55,30 @@
     ```console
     curl -sL https://aws-amplify.github.io/amplify-cli/install | bash && $SHELL
     ```
+    - NOTE: The command above is different when installing on Windows
 
+  - **Create a new directory to hold your Amplify project**
+    ```console
+    mkdir my-amplify-project
+    cd my-amplify-project
+    ```
   - **Pull the Amplify project (copied CLI command from earlier)**
     ```console
-    amplify pull --appId d1examplesf9 --envName staging
+    amplify pull --appId <<APP_ID>> --envName staging
     ```
     - Browser will open and request access for Amplify CLI
       - NOTE: You MUST already have launched Amplify Studio before this step!
     - choose 'javascript' for 'type of app'
     - choose 'none' for 'javascript framework'
     - choose defaults for the directories
+    - choose defaults for build/start commands
     - choose YES for 'modify this backend'
 
   - **Add Authentication**
     ```console
     amplify auth add
     ```
-    - Default provider
+    - Default configuration
     - Username
     - No additional capabilities
 
@@ -83,7 +96,7 @@
     - GraphQL
     - Blank Schema
     - Edit Schema: YES
-    - Paste schema into editor, then save:
+    - Replace defaults in editor with schema below, then save:
 
 ```
 type Person @model @auth(rules: [{ allow: public }]) {
@@ -103,6 +116,7 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
   participantToken: String
 }
 ```
+
   - **Add Function**
     ```console
     amplify function add
@@ -118,24 +132,42 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
       - No Lambda layers
       - YES environment variables:
       ```
-          PINPOINT_APP_ID 
-          GRAPH_QL_KEY 
-          GRAPH_QL_API_URL  -- Use placeholder values for all vars (for now)
-          BW_ACCOUNT_ID 
-          BW_USERNAME 
-          BW_PASSWORD
+          PINPOINT_APP_ID -- Use placeholder value
+          GRAPH_QL_KEY -- Use placeholder value
+          GRAPH_QL_API_URL  -- Use placeholder values
+          BW_ACCOUNT_ID -- Enter your Bandwidth account ID
+          BW_USERNAME -- Enter your Bandwidth username
+          BW_PASSWORD -- Enter your Bandwidth password
       ```
       - No secret values
       - Yes edit lambda function
-        - Paste Lambda function code into editor, then save:
+        - Replace hello-world Lambda function with code from the following file, then save:
 
          [Lambda Function: index.js](https://github.com/Bandwidth/webrtc_mobile/blob/main/backend/index.js)
          
+      - Now change directory into the Lambda's src (location of "index.js")
+         - eg: my-amplify-project/amplify/backend/function/<<LAMBDA_NAME>>/src
+      - Edit the "package.json" file located here
+         - eg: my-amplify-project/amplify/backend/function/<<LAMBDA_NAME>>/src/package.json
+         - Add a line, then save:
+         ```console
+         {
+         ...
+            "type":"module",
+         ...
+         }
+         ```
+      - Install additional NPM packages:
+         ```console
+         npm i @bandwidth/webrtc aws-sdk axios graphql-tag graphql uuid
+         ```
+      
   - **Add REST API**
     ```console
     amplify api add
     ```
     - REST
+    - Accept the default label
     - Path:  ``` /api ```
     - Use existing lambda function
     - No restrictions
@@ -149,43 +181,58 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
     - wait for project to finish deploying
     - Copy the output values:
     ```
-       GraphQL endpoint: https://7bEXAMPLEfyu.appsync-api.us-east-1.amazonaws.com/graphql
-       GraphQL API KEY: da2-egolfEXAMPLEdv37wjtm
-       REST API endpoint: https://jmEXAMPLE4i.execute-api.us-east-1.amazonaws.com/staging
+       GraphQL endpoint: (EXAMPLE) https://7bEXAMPLEfyu.appsync-api.us-east-1.amazonaws.com/graphql
+       GraphQL API KEY: (EXAMPLE) da2-egolfEXAMPLEdv37wjtm
+       REST API endpoint: (EXAMPLE) https://jmEXAMPLE4i.execute-api.us-east-1.amazonaws.com/staging
     ```
 
   - **Configure Amazon Pinpoint**
     https://console.aws.amazon.com/pinpoint/home
     - Choose the newly made Pinpoint project
     - Copy the ProjectID
-      eg: ``` 4d8065387dexample9f1d680b399 ```
+      eg: ``` (EXAMPLE) 4d8065387dexample9f1d680b399 ```
     - Settings -> Push Notifications -> Edit
-    - Add [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server)
-      - This requires creating an account and application with FCM.
-      - Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console.
-    - TODO: Similar steps will be performed to upload a `.p12` certificate to enable iOS notifications when an iOS version is available.
+    - ANDROID:
+      - Add [FCM Server Key](https://firebase.google.com/docs/cloud-messaging/server)
+         - This requires creating an account and application with FCM.
+         - Configure the [Firebase Channel](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-push-manage.html) of Pinpoint with the server key you have acquired in the AWS Console.
+    - iOS:
+      - **TODO:** Similar steps will be performed to upload a `.p12` certificate to enable iOS notifications when an iOS version is available.
 
+
+   - **Update GraphQL with AutoMerge**
+      ```console
+      amplify api update
+      ```
+      - GraphQL
+      - Enable conflict detection
+      - Auto Merge
+      - YES override default per-model
+      - Select ALL models
+      - Select Auto Merge for each model
 
   - **Update Environment Variables for the Lambda** ([docs here](https://aws.amazon.com/blogs/mobile/configure-environment-variables-and-secrets-for-your-lambda-functions-with-amplify-cli/))
-```console
-     amplify function update
+      ```console
+      amplify function update
           PINPOINT_APP_ID   -- from Pinpoint ProjectID
           GRAPH_QL_KEY      -- from Amplify push output
           GRAPH_QL_API_URL  -- from Amplify push output
-```
+      ```
 
   - **Push final project**
     ```console
     amplify push
     ```
-    - Back end should now be up & configured to run
+    - Back end should now be up & configured to run!
 
 
 ### Testing
 
 - Using curl or Postman, etc. you can invoke the Lambda API to see if it is running correctly
 - POST to the REST API endpoint returned by ``` amplify status ```
-   
+- NOTE: be sure to add ``` /api ``` to the end of the REST endpoint
+
+   ``` (EXAMPLE) https://jmEXAMPLE4i.execute-api.us-east-1.amazonaws.com/staging/api ```
 - **Register a new user (POST):**
     ```
     {
@@ -207,6 +254,12 @@ type DeviceInfo @model @auth(rules: [{ allow: public }]) {
     {
         "action":"deleteClientIds",
         "clientIds":["c1aae098-7da1-4361-812f-91eea97a1f17"]
+    }
+    ```
+    - Returns:
+    ```
+    {
+      "deletedIds": [{"id": "c1aae098-7da1-4361-812f-91eea97a1f17"}]
     }
     ```
 
