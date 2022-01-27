@@ -3,6 +3,7 @@ package com.bandwidth.android;
 // A place to have common functions needed by multiple activities
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.amplifyframework.api.aws.AWSApiPlugin;
@@ -16,7 +17,12 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 public class BWLibrary {
 
+    public static String LAMBDA_URL = "https://eys0a9ycb7.execute-api.us-east-1.amazonaws.com/default/webrtcPushNotifier-staging";
+
     public static int getNotificationId(Bundle extras) {
+        if(extras == null) {
+            return 0;
+        }
         int notificationId = extras.getInt("notificationId");
         return notificationId;
     }
@@ -46,5 +52,12 @@ public class BWLibrary {
                 // ignore exception if amplify already configured
                 System.out.println("EXCEPTION:" + e.getMessage());
             }
+    }
+
+    // fires a new activity, ListUsersActivity
+    public static void showUsers(Context context) {
+        System.out.println("BWLibrary: showUsers called()");
+        Intent i = new Intent(context, ListUsersActivity.class);
+        context.startActivity(i);
     }
 }

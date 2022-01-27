@@ -34,9 +34,13 @@ public class PushListenerService extends FirebaseMessagingService {
 
     @Override
     public void onNewToken(String token) {
+        // NOTE
+        // This function is fired when a new firebase token is received for a device;
+        // This is not utilized for the sample app. Anytime a device token changes, you should
+        // prompt the user to enter their re
         super.onNewToken(token);
 
-        Log.d(TAG, "Registering push notifications token: " + token);
+        Log.d(TAG, "NEW push notifications token: " + token);
     }
 
     @Override

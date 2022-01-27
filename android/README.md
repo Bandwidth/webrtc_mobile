@@ -66,6 +66,11 @@ class MainActivity extends AppCompatActivity {
 }
 ```
 
+### Registration Process for Sample App
+The first time you are running the Android app, you will have to enter a desired username, firstname and lastname for the sample app. On hitting the submit button, this will create a Cognito user, a DeviceInfo record with the firebase device token and a Person record.
+
+Subsequent logins to the app only require the username you created in the previous step. Omitting the name fields during the first time load of the app will create a record with an empty name in this sample app!
+
 ### Flow of sample app
 
 - **LoginActivity** \

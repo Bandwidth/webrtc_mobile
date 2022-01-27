@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.amplifyframework.AmplifyException;
+import com.amplifyframework.api.rest.RestOptions;
+import com.amplifyframework.api.rest.RestResponse;
 import com.amplifyframework.core.Amplify;
 import com.amplifyframework.core.model.query.Where;
 import com.amplifyframework.datastore.AWSDataStorePlugin;
@@ -54,9 +56,10 @@ public class MainActivity extends AppCompatActivity {
 
     private EglBase eglBase;
 
-    private Boolean isConnected = false;
-
     public static final String TAG = MainActivity.class.getSimpleName();
+
+    private String theCallerId = null;
+    private String theCalleeId = null;
 
     // this function is called when a user calls another user
     // gets the DeviceInfo table's id using Firebase token
@@ -64,9 +67,11 @@ public class MainActivity extends AppCompatActivity {
         new Thread((() -> {
             if(LoginActivity.deviceId != null) {
                 // on login, we set the deviceId for the user in the java class
-                connect(LoginActivity.deviceId, calleeId);
+                getParticipantTokenAndConnect(LoginActivity.deviceId, calleeId);
+                // connect(LoginActivity.deviceId, calleeId);
             }
 
+            // if for some reason, the deviceId for caller is not set already, fetch it from the db
             String deviceToken = BWLibrary.getFirebaseDeviceToken();
 
             Amplify.DataStore.query(DeviceInfo.class, Where.matches(DeviceInfo.DEVICE_TOKEN.eq(deviceToken)),
@@ -74,7 +79,8 @@ public class MainActivity extends AppCompatActivity {
                         if(devices.hasNext()) {
                             System.out.println(TAG + ": Found deviceId for token " + deviceToken);
                             String callerId = devices.next().getId();
-                            connect(callerId, calleeId);
+                            getParticipantTokenAndConnect(callerId, calleeId);
+                            // connect(LoginActivity.deviceId, calleeId);
                         }
                         // TODO error handling for when deviceId is not found for the deviceToken
                     },
@@ -86,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     // this function is used when a user accepts an incoming call
     private void joinSession(String pToken) {
         new Thread((() -> {
-            System.out.println(TAG  + ": in getDeviceIdAndConnect()");
+            System.out.println(TAG  + ": in joinSession()");
             connectToSession(pToken);
         })).start();
     }
@@ -164,21 +170,14 @@ public class MainActivity extends AppCompatActivity {
 
         final Button button = findViewById(R.id.connectButton);
         button.setOnClickListener(view -> {
-            if (isConnected) {
-                disconnect();
-                // TODO send to ListUsersActivity here
-                button.setText("Connect");
-            } else {
-//                connect();
-                button.setText("Disconnect");
-            }
+            disconnect();
         });
 
         Bundle extras = getIntent().getExtras();
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         manager.cancel(BWLibrary.getNotificationId(getIntent().getExtras()));
 
-        String pToken = getPToken(extras);
+        String pToken = getPTokenFromRequest(extras);
 
         // pToken is set in extras for incoming calls
         if(pToken != null) {
@@ -191,9 +190,9 @@ public class MainActivity extends AppCompatActivity {
             //  initiate webrtc call
             getDeviceIdAndConnect(getCalleeId(extras));
         }
-        if(!isConnected) {
-            button.setText("Disconnect");
-        }
+//        if(!isConnected) {
+//            button.setText("Disconnect");
+//        }
 
     }
 
@@ -205,8 +204,10 @@ public class MainActivity extends AppCompatActivity {
         return calleeId;
     }
 
-    private String getPToken(Bundle extras) {
-        System.out.println(TAG + ": in getPToken");
+    // This function is utilized when this activity is called as a result of answering
+    // an incoming notification
+    private String getPTokenFromRequest(Bundle extras) {
+        System.out.println(TAG + ": in getPTokenFromRequest");
         String pToken = null;
         if(extras != null && extras.getString("pToken") != null &&
                 !extras.getString("pToken").equals("")) {
@@ -230,6 +231,46 @@ public class MainActivity extends AppCompatActivity {
         We will eventually use this participantToken for the CALLER, in our Bandwidth's SDK call to
         publish CALLER's mediastream to the webrtc session that was just created.
      */
+    private void getParticipantTokenAndConnect(String callerId, String calleeId) {
+        try {
+            System.out.println("Using AWSApiPlugin...");
+            System.out.println("in getParticipantToken: " + callerId + ":::" + calleeId);
+
+            theCallerId = callerId;
+            theCalleeId = calleeId;
+
+            String json = "{" +
+                    "\"action\": \"initiateCall\"," +
+                    "\"callerId\": \"" + callerId + "\"," +
+                    "\"calleeId\":\"" + calleeId + "\"" +
+                    "}";
+
+            RestOptions options = RestOptions.builder()
+                    .addPath("/api")
+                    .addBody(json.getBytes())
+                    .build();
+
+            Amplify.API.post(options,
+                    response -> onTokenReceipt(response),
+                    error -> System.out.println("getParticipantTokenAndConnect: POST failed." + error.toString())
+            );
+        } catch (Exception e) {
+            System.out.println("getParticipantTokenAndConnect: Exception trying AWSApiPlugin: " + e.getMessage());
+        }
+    }
+
+    private void onTokenReceipt(RestResponse response) {
+        try {
+            System.out.println("Resp from API call: " + response.getData().asJSONObject());
+            String bwParticipantToken = (String)response.getData().asJSONObject().get("token");
+
+            connectToSession(bwParticipantToken);
+        } catch (Exception e) {
+            System.out.println("Error fetching bwParticipantToken from API: "+ e.getMessage());
+        }
+    }
+
+    // TODO remove this and connect() when email verification from new Cognito users is removed
     private String getParticipantToken(String callerId, String calleeId) {
         try {
             System.out.println("in getParticipantToken: " + callerId + ":::" + calleeId);
@@ -239,10 +280,7 @@ public class MainActivity extends AppCompatActivity {
                     "\"calleeId\":\"" + calleeId + "\"" +
                     "}";
 
-            // TODO we can use Amplify's RestOptions wrapper to make API calls in a much cleaner way
-            String registerUrl = "https://eys0a9ycb7.execute-api.us-east-1.amazonaws.com/default/webrtcPushNotifier-staging";
-
-            URL url = new URL(registerUrl);
+            URL url = new URL(BWLibrary.LAMBDA_URL);
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json; utf-8");
@@ -271,41 +309,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // This function publishes a mediastream using Bandwidth's SDK and the Bandwidth participantToken
-    // that has already been added to a webrtc session by the backend
-    private void connectToSession(String pToken) {
-        offeredVideoTracks = new HashMap<String, VideoTrack>();
-
-        try {
-            bandwidth.connect(pToken, () -> {
-                isConnected = true;
-
-                bandwidth.publish("hello-world-android-callee", (streamId, mediaTypes, audioSource, audioTrack, videoSource, videoTrack) -> {
-                    runOnUiThread(() -> publish(videoSource, videoTrack));
-                });
-            });
-        } catch (ConnectionException e) {
-            e.printStackTrace();
-            System.out.println((e.getMessage()));
-        }
-    }
-
     // This function is called when a caller initiates a call
     private void connect(String callerId, String calleeId) {
         // get a Bandwidth participant token for the caller
         String bwParticipantToken = getParticipantToken(callerId, calleeId);
 
         connectToSession(bwParticipantToken);
-//            bandwidth.connect(bwParticipantToken, () -> {
-//                isConnected = true;
-//                 bandwidth.publish("hello-world-android-caller", (streamId, mediaTypes, audioSource, audioTrack, videoSource, videoTrack) -> {
-//                     runOnUiThread(() -> publish(videoSource, videoTrack));
-//                 });
-//            });
+    }
+
+    // This function publishes a mediastream using Bandwidth's SDK and the Bandwidth participantToken
+    // that has already been added to a webrtc session by the backend
+    private void connectToSession(String pToken) {
+        offeredVideoTracks = new HashMap<String, VideoTrack>();
+
+        System.out.println("in connectToSession: " + pToken);
+        try {
+            bandwidth.connect(pToken, () -> {
+                bandwidth.publish("hello-world-android-callee", (streamId, mediaTypes, audioSource, audioTrack, videoSource, videoTrack) -> {
+                    runOnUiThread(() -> publish(videoSource, videoTrack));
+                });
+            });
+        } catch (ConnectionException e) {
+            e.printStackTrace();
+            System.out.println("Error publishing mediastream to bandwidth: " + e.getMessage());
+        }
     }
 
     private void disconnect() {
-        isConnected = false;
 
         try {
             videoCapturer.stopCapture();
@@ -318,6 +348,47 @@ public class MainActivity extends AppCompatActivity {
         bandwidth.disconnect();
 
         remoteRenderer.clearImage();
+
+        if(theCallerId == null && theCalleeId == null) {
+            finishAndRemoveTask();
+            return;
+        }
+        if(theCallerId != null) {
+            clearParticipantTokenFromDb(theCallerId);
+            theCallerId = null;
+        }
+
+        if(theCalleeId != null) {
+            clearParticipantTokenFromDb(theCalleeId);
+            theCalleeId = null;
+        }
+    }
+
+    // clears the participantToken field from db
+    // this is specific to sample app's backend implementation; in a prod world, you would end
+    // the bandwidth webrtc session
+    private void clearParticipantTokenFromDb(String clientId) {
+        try {
+            System.out.println("clearParticipantTokenFromDb() for " + clientId);
+
+
+            String json = "{" +
+                    "\"action\": \"endCall\"," +
+                    "\"clientId\": \"" + clientId + "\"" +
+                    "}";
+
+            RestOptions options = RestOptions.builder()
+                    .addPath("/api")
+                    .addBody(json.getBytes())
+                    .build();
+
+            Amplify.API.post(options,
+                    response -> BWLibrary.showUsers(MainActivity.this),
+                    error -> System.out.println("POST failed for clearParticipantToken." + error.toString())
+            );
+        } catch (Exception e) {
+
+        }
     }
 
     private VideoCapturer createVideoCapturer() {
