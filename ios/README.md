@@ -2,6 +2,7 @@
  
 ## Some Notes
 - Push notifications must be enabled, and this requires an Apple Developer Account. There are a number of steps involved for this process, but these include 1) creating a certificate on the Apple developer website, 2) adding this certificate to your Pinpoint application, 3) adding these credentials to the XCode project, and 4) adding the push notifications capability to the app inside of XCode. [This](https://www.raywenderlich.com/11395893-push-notifications-tutorial-getting-started) is a great place to see how that is done
+- Amplify must be pulled into the existing project workspace (where *.xcodeproject is found). Make sure to select XCode as the editor and iOS as the framework. After doing so, all of the amplify configuration for connecting to the backend will be properly configured.
 ## Files in Application 
 | Filename | Purpose
 | -------- |  -------- 
