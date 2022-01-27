@@ -86,7 +86,7 @@ Subsequent logins to the app only require the username you created in the previo
     Touching a user initiates a BW webrtc call to them. It kicks off the MainActivity, passing in the
     callee's deviceId to it.
 
-- **MainActivity** \
+- **MainActivity (***Utilization of Bandwidth Android SDK***)** \
     This activity is invoked when a) you call someone and b) you are called.
 
     ***When you call someone*** \
@@ -117,15 +117,9 @@ The bandwidth webrtc SDK can be found under webrtc/ All the UI components can be
 ### Yet to be implemented
 
 - Online status for users, synced b/w app and datastore via Amplify
-- Syncing all datastore updates, in general, to/from cloud datastore
 - Multi party calling
 - Don't force logging in everytime
 - UI field for email during registrations with Cognito
-- UI option to confirm email registrations using OTP. For now, to confirm a registration via amplify CLI, do the following \
-    aws cognito-idp admin-set-user-password \
-         --user-pool-id YOUR_USER_POOL_ID \
-        --username YOUR_USER_NAME \
-        --password YOUR_PASSWORD \
-        --permanent
+- UI option to confirm email registrations using OTP.
 - Better ringtone on incoming calls
 - Better UI for incoming call notifications

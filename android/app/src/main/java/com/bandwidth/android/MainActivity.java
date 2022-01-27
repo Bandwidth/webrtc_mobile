@@ -68,10 +68,13 @@ public class MainActivity extends AppCompatActivity {
             if(LoginActivity.deviceId != null) {
                 // on login, we set the deviceId for the user in the java class
                 getParticipantTokenAndConnect(LoginActivity.deviceId, calleeId);
-                // connect(LoginActivity.deviceId, calleeId);
             }
 
             // if for some reason, the deviceId for caller is not set already, fetch it from the db
+            // TODO we should not be querying the DeviceInfo table as it is a sensitive table
+            //      With a better login process / db structure, we should be able to associate
+            //      usernames with their deviceId (& other information) in the db
+            //      The deviceId for a user should be fetched on login
             String deviceToken = BWLibrary.getFirebaseDeviceToken();
 
             Amplify.DataStore.query(DeviceInfo.class, Where.matches(DeviceInfo.DEVICE_TOKEN.eq(deviceToken)),
@@ -80,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
                             System.out.println(TAG + ": Found deviceId for token " + deviceToken);
                             String callerId = devices.next().getId();
                             getParticipantTokenAndConnect(callerId, calleeId);
-                            // connect(LoginActivity.deviceId, calleeId);
                         }
                         // TODO error handling for when deviceId is not found for the deviceToken
                     },
